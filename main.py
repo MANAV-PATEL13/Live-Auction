@@ -1,13 +1,62 @@
-from fastapi import FastAPI, APIRouter, status, HTTPException
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, status
+
+from src.core.config import settings
+from src.core.database import client
+
+from src.common.utils import success_response
+from src.common.exception_handler import app_exception_handler
+from src.common.exceptions import AppException
 
 
-APP = FastAPI(
-    title="Bhaktipurv",
-    version="v2.0.0"
+@asynccontextmanager
+async def lifespan(app : FastAPI):
+
+    # start
+    print("Application starting...")
+
+
+    try:
+        await client.admin.command("ping")
+        print("MongoDB connected..")
+
+    except Exception as e:
+        print("Database connection failed")
+        raise e
+
+
+
+    yield
+
+    # shutdown
+    print("Closing application")
+
+    client.close()
+
+
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    lifespan=lifespan,
+    description="",
+    version= settings.VERSION
 )
 
-@APP.get("/", status_code=status.HTTP_200_OK)
-async def greeting():
-    return {
-        'message' : 'Welcome Bhaktipurv Backend'
-    }
+
+app.add_exception_handler(
+    AppException,
+    app_exception_handler
+)
+
+
+@app.get("/")
+async def root():
+
+    return success_response(
+        data={
+            "name" : settings.APP_NAME,
+            "version" : settings.VERSION
+        },
+        message = "Welcome to Bhaktipurv"
+    )
