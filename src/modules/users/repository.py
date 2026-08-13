@@ -1,4 +1,5 @@
 from src.modules.users.model import User
+from bson import ObjectId
 
 class UserRepository:
 
@@ -9,6 +10,15 @@ class UserRepository:
 
         return await User.find_one(
             User.email == email
+        )
+
+    async def get_by_id(
+            self,
+            user_id : str   
+    ):
+
+        return await User.get(
+            ObjectId(user_id)
         )
 
 
