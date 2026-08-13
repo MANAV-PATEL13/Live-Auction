@@ -1,11 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from src.common.utils import success_response
-from src.modules.auth.schema import LoginRequest
+from src.modules.auth.schema import LoginRequest, RefreshTokenRequest
 from src.modules.auth.service import AuthService
 from src.modules.users.schema import UserCreate
 from src.modules.users.service import UserService
 
+from src.modules.auth.dependencies import get_current_user
+from src.modules.users.model import User
 
 router = APIRouter(
     prefix = '/auth',
@@ -48,27 +50,34 @@ async def login(data : LoginRequest):
     )
 
 
-@router.get("/login")
-async def login(data: LoginRequest):
+@router.post("/refresh")
+async def refresh_token(
+    data: RefreshTokenRequest,
+):
 
-    user = await auth_service.authenticate(
-        data.email,
-        data.password
+    access_token = await auth_service.refresh_access_token(
+        data.refresh_token
     )
 
-    if not user:
-        return{
-            "success": False,
-            "code": 401,
-            "message": "Invalid email or password",
-            "data": None,
-            "errors": None
-        }
+    return success_response(
+        message="Access token refreshed successfully",
+        data={
+            "access_token": access_token,
+            "token_type": "bearer",
+        },
+    )
+
+
+@router.get("/me")
+async def get_me(
+    current_user : User = Depends(get_current_user),
+):
 
     return success_response(
-        message="Login successfuly...",
+        message="User fetched Successfully",
         data={
-            "name" : user.name,
-            "email" : user.email
+            "id" : str(current_user.id),
+            "name" : current_user.name,
+            "email" : current_user.email,
         }
     )

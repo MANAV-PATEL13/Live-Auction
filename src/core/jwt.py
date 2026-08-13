@@ -13,6 +13,8 @@ def create_token(
 
     now = datetime.now(timezone.utc)
 
+    print(now)
+
     payload = {
         "sub" : user_id,
         "type" : token_type,
@@ -33,7 +35,7 @@ def create_access_token(user_id : str) -> str:
         user_id=user_id,
         token_type="access",
         expires_delta=timedelta(
-            days=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     )
 
@@ -46,4 +48,13 @@ def create_refresh_token(user_id : str) -> str:
         expires_delta=timedelta(
             days=settings.REFRESH_TOKEN_EXPIRE_DAYS
         )
+    )
+
+
+def decode_token(token:str) -> dict:
+
+    return jwt.decode(
+        token,
+        settings.JWT_SECRET_KEY,
+        algorithms=[settings.JWT_ALGORITHM]
     )

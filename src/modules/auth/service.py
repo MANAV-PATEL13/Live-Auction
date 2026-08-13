@@ -3,6 +3,7 @@ from src.modules.users.repository import UserRepository
 
 from src.common.exceptions import (
     InactiveUserException,
+    InvalidCredentialsException,
     InvalidEmailCredentialsException,
     InvalidPasswordCredentialsException,
     UserNotAllowedException 
@@ -10,7 +11,7 @@ from src.common.exceptions import (
 
 from fastapi import HTTPException, status
 
-from src.core.jwt import create_access_token, create_refresh_token
+from src.core.jwt import create_access_token, create_refresh_token, decode_token
 
 class AuthService:
 
@@ -64,3 +65,39 @@ class AuthService:
         )
 
         return access_token, refresh_token
+
+    async def refresh_access_token(
+        self,
+        refresh_token: str,
+    ):
+
+        try:
+            payload = decode_token(refresh_token)
+
+        except Exception:
+            raise InvalidCredentialsException()
+
+        if payload.get("type") != "refresh":
+            raise InvalidCredentialsException()
+
+        user_id = payload.get("sub")
+
+        if not user_id:
+            raise InvalidCredentialsException()
+
+        user = await self.repo.get_by_id(user_id)
+
+        if not user:
+            raise InvalidCredentialsException()
+
+        if not user.is_active:
+            raise InactiveUserException()
+
+        if not user.is_allowed:
+            raise UserNotAllowedException()
+
+        access_token = create_access_token(
+            str(user.id)
+        )
+
+        return access_token

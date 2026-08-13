@@ -19,6 +19,14 @@ class EmailAreadyExistsException(AppException):
                   code=409
             )
 
+class InvalidCredentialsException(AppException):
+
+     def __init__(self):
+          super().__init__(
+                message = "Invalid email or password",
+                code = "401"
+            )
+
 class InvalidEmailCredentialsException(AppException):
 
     def __init__(self):
