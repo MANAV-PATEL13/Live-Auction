@@ -13,8 +13,6 @@ def create_token(
 
     now = datetime.now(timezone.utc)
 
-    print(now)
-
     payload = {
         "sub" : user_id,
         "type" : token_type,
