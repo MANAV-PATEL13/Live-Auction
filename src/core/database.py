@@ -5,6 +5,8 @@ from src.core.config import settings
 
 # models..
 from src.modules.users.model import User
+from src.modules.permission_groups.model import PermissionGroup
+from src.modules.permissions.model import Permission
 
 client = AsyncMongoClient(
     settings.MONGO_URL
@@ -19,6 +21,8 @@ async def init_database():
     await init_beanie(
         database= database,
         document_models=[
-            User
+            User,
+            Permission,
+            PermissionGroup
         ]
     )

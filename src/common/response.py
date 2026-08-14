@@ -10,7 +10,4 @@ class ResponseModel(BaseModel,Generic[T]):
     success : bool
     code : int
     message : str
-
     data : Optional[T] = None
-
-    errors : Optional[list] = None

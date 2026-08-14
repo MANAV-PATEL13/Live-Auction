@@ -11,19 +11,17 @@ def success_response(
         success=True,
         code=code,
         message=message,
-        data=data
+        data=data,
     )
 
 
 def error_response(
         message,
         code = 400,
-        errors = None
 ):
 
     return ResponseModel(
         success=False,
         code=code,
         message=message,
-        errors=errors
     )

@@ -1,7 +1,7 @@
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from src.common.exceptions import InvalidCredentialsException, InvalidEmailCredentialsException, InactiveUserException
+from src.common.exceptions import InvalidCredentialsException, InvalidEmailCredentialsException, InactiveUserException, InvalidTokenException
 from src.core.jwt import decode_token
 from src.modules.users.repository import UserRepository
 
@@ -21,10 +21,10 @@ async def get_current_user(
         payload = decode_token(token)
 
     except Exception:
-        raise InvalidCredentialsException()
+        raise InvalidTokenException()
 
     if payload.get("type") != "access":
-        raise InvalidCredentialsException()
+        raise ()
 
     user_id = payload.get("sub")
 
