@@ -2,7 +2,7 @@ from src.modules.users.model import User
 from src.modules.users.schema import UserCreate
 from src.modules.users.repository import UserRepository
 from src.core.security import hash_password
-from src.common.exceptions import EmailAreadyExistsException
+from src.common.exceptions import EmailAreadyExistsException, AppException
 
 class UserService:
 
@@ -34,6 +34,7 @@ class UserService:
             if part
         )
 
+
         user = User(
             name = name,
             first_name= data.first_name,
@@ -42,7 +43,8 @@ class UserService:
             roll_no=data.roll_no,
             email=data.email,
             mobile=data.mobile,
-            password_hash=hash_password(data.password)
+            password_hash=hash_password(data.password),
+
         )
 
         return await self.repo.create(user)

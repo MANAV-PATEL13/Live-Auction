@@ -53,7 +53,7 @@ app.add_exception_handler(
 )
 
 
-@app.get("/app ")
+@app.get("/app")
 async def root():
 
     return success_response(
