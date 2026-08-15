@@ -18,3 +18,19 @@ async def app_exception_handler(
             "data" : None,
         }
     )
+
+
+async def generic_exception_handler(
+        request : Request,
+        exc : Exception
+):
+
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success" : False,
+            "code" : 500,
+            "message" : "Internal server error",
+            "data" : None,
+        }
+    )

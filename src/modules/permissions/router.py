@@ -1,10 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from src.modules.permissions.schema import (
     PermissionCreate,
     PermissionUpdate,
 )
 from src.modules.permissions.service import PermissionService
+from src.modules.auth.dependencies import require_permission
+from src.modules.users.model import User
 
 from src.common.utils import success_response
 
@@ -20,41 +22,41 @@ service = PermissionService()
 @router.post("")
 async def create_permission(
     data: PermissionCreate,
+    current_user: User = Depends(require_permission("permission:create")),
 ):
     permission = await service.create(data)
 
     return success_response(
-        code= 201,
-        message= "Permission created successfully",
-        data= permission,
+        code=201,
+        message="Permission created successfully",
+        data=permission,
     )
 
 
 @router.get("")
-async def get_permissions():
-
+async def get_permissions(
+    current_user: User = Depends(require_permission("permission:read")),
+):
     permissions = await service.get_all()
 
     return success_response(
-        code= 200,
-        message= "Permissions fetched successfully",
-        data= permissions,
+        code=200,
+        message="Permissions fetched successfully",
+        data=permissions,
     )
 
 
 @router.get("/{permission_id}")
 async def get_permission(
     permission_id: str,
+    current_user: User = Depends(require_permission("permission:read")),
 ):
-
-    permission = await service.get_by_id(
-        permission_id
-    )
+    permission = await service.get_by_id(permission_id)
 
     return success_response(
-        code= 200,
-        message= "Permission fetched successfully",
-        data= permission,
+        code=200,
+        message="Permission fetched successfully",
+        data=permission,
     )
 
 
@@ -62,30 +64,29 @@ async def get_permission(
 async def update_permission(
     permission_id: str,
     data: PermissionUpdate,
+    current_user: User = Depends(require_permission("permission:update")),
 ):
-
     permission = await service.update(
         permission_id,
         data,
     )
 
     return success_response(
-        code= 200,
-        message= "Permission updated successfully",
-        data= permission,
+        code=200,
+        message="Permission updated successfully",
+        data=permission,
     )
-    
 
 
 @router.delete("/{permission_id}")
 async def delete_permission(
     permission_id: str,
+    current_user: User = Depends(require_permission("permission:delete")),
 ):
-
     await service.delete(permission_id)
 
     return success_response(
-        code= 200,
-        message= "Permission deleted successfully",
-        data= None,
+        code=200,
+        message="Permission deleted successfully",
+        data=None,
     )

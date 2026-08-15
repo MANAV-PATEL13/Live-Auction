@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from src.common.utils import success_response
 from src.modules.auth.schema import LoginRequest, RefreshTokenRequest
 from src.modules.auth.service import AuthService
-from src.modules.users.schema import UserCreate, UserResponse
+from src.modules.users.schema import UserCreate
 from src.modules.users.service import UserService
 
 from src.modules.auth.dependencies import get_current_user
@@ -34,7 +34,8 @@ async def register(data: UserCreate):
         }
     )
 
-@router.get("/login")
+
+@router.post("/login")
 async def login(data : LoginRequest):
 
     access_token, refresh_token = await auth_service.login(
@@ -66,21 +67,4 @@ async def refresh_token(
             "access_token": access_token,
             "token_type": "bearer",
         },
-    )
-
-
-@router.get(
-        "/me",)
-async def get_me(
-    current_user : User = Depends(get_current_user),
-):
-
-    return success_response(
-        message="User fetched Successfully",
-        data={
-            "id" : str(current_user.id),
-            "name" : current_user.name,
-            "email" : current_user.email,
-
-        }
     )

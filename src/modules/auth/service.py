@@ -6,7 +6,8 @@ from src.common.exceptions import (
     InvalidCredentialsException,
     InvalidEmailCredentialsException,
     InvalidPasswordCredentialsException,
-    UserNotAllowedException 
+    UserNotAllowedException,
+    InvalidTokenException
 )
 
 from fastapi import HTTPException, status
@@ -75,7 +76,7 @@ class AuthService:
             payload = decode_token(refresh_token)
 
         except Exception:
-            raise InvalidCredentialsException()
+            raise InvalidTokenException()
 
         if payload.get("type") != "refresh":
             raise InvalidCredentialsException()
