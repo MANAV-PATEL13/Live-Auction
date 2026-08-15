@@ -32,7 +32,7 @@ class InvalidCredentialsException(AppException):
      def __init__(self):
           super().__init__(
                 message = "Invalid email or password",
-                code = "401"
+                code = 401
             )
 
 class InvalidEmailCredentialsException(AppException):
@@ -57,7 +57,7 @@ class InactiveUserException(AppException):
     def __init__(self):
         super().__init__(
             message="User not found",
-            code=404,
+            code=403,
         )
 
 
@@ -72,8 +72,8 @@ class UserNotAllowedException(AppException):
 
 class ForbiddenException(AppException):
 
-     def __init__(self, message : str = "Forbidden"):
+     def __init__(self, message : str = "You do not have permission to perform this action"):
           super().__init__(
-               message="User not have permission",
+               message=message,
                code=403
           )

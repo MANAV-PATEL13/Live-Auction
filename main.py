@@ -1,12 +1,12 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 
 from src.core.config import settings
 from src.core.database import client, init_database
 
 from src.common.utils import success_response
-from src.common.exception_handler import app_exception_handler
+from src.common.exception_handler import app_exception_handler, generic_exception_handler
 from src.common.exceptions import AppException
 
 from src.api.router import router
@@ -50,6 +50,11 @@ app.include_router(router)
 app.add_exception_handler(
     AppException,
     app_exception_handler
+)
+
+app.add_exception_handler(
+    Exception,
+    generic_exception_handler
 )
 
 
