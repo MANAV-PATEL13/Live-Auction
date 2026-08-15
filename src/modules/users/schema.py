@@ -31,3 +31,7 @@ class UserResponse(BaseModel):
     is_active : bool    
     is_allowed : bool    
     is_superuser : bool
+
+
+class UserGroupsUpdate(BaseModel):
+    group_ids : list[str]

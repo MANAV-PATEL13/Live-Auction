@@ -1,8 +1,9 @@
 from src.modules.users.model import User
-from src.modules.users.schema import UserCreate
+from src.modules.users.schema import UserCreate, UserGroupsUpdate
 from src.modules.users.repository import UserRepository
 from src.core.security import hash_password
 from src.common.exceptions import EmailAreadyExistsException, AppException
+
 
 class UserService:
 
@@ -48,3 +49,70 @@ class UserService:
         )
 
         return await self.repo.create(user)
+
+    async def get_by_id(
+            self,
+            user_id: str,
+    ) -> User:
+
+        user = await self.repo.get_by_id(user_id)
+
+        if not user:
+            raise AppException(
+                message="User not found",
+                code=404,
+            )
+
+        return user
+
+    async def get_all(self) -> list[User]:
+        return await self.repo.get_all()
+
+    async def update_groups(
+            self,
+            user_id: str,
+            data: UserGroupsUpdate,
+    ) -> User:
+
+        user = await self.get_by_id(user_id)
+
+        return await self.repo.update(
+            user,
+            {"group_ids": data.group_ids},
+        )
+
+    async def reactivate(
+            self,
+            user_id: str,
+    ) -> User:
+
+        user = await self.get_by_id(user_id)
+
+        return await self.repo.update(
+            user,
+            {"is_allowed": True},
+        )
+    
+    async def deactivate(
+            self,
+            user_id: str,
+    ) -> User:
+
+        user = await self.get_by_id(user_id)
+
+        return await self.repo.update(
+            user,
+            {"is_allowed": False},
+        )
+
+    async def delete(
+            self,
+            user_id: str,
+    ) -> None:
+
+        user = await self.get_by_id(user_id)
+
+        await self.repo.update(
+            user,
+            {"is_active": False},
+        )

@@ -1,5 +1,8 @@
-from src.modules.users.model import User
 from bson import ObjectId
+from beanie import PydanticObjectId
+
+from src.modules.users.model import User
+
 
 class UserRepository:
 
@@ -16,11 +19,15 @@ class UserRepository:
             self,
             user_id : str   
     ):
+        if not PydanticObjectId.is_valid(user_id):
+            return None
 
         return await User.get(
-            ObjectId(user_id)
+            PydanticObjectId(user_id)
         )
 
+    async def get_all(self) -> list[User]:
+        return await User.find_all().to_list()
 
     async def create(
             self,
@@ -30,3 +37,23 @@ class UserRepository:
         await user.insert()
 
         return user
+
+    async def update(
+            self,
+            user: User,
+            data: dict,
+    ) -> User:
+
+        for field, value in data.items():
+            setattr(user, field, value)
+
+        await user.save()
+
+        return user
+
+    async def delete(
+            self,
+            user: User,
+    ) -> None:
+
+        await user.delete()
