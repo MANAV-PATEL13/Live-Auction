@@ -7,6 +7,7 @@ from src.core.config import settings
 from src.modules.users.model import User
 from src.modules.permission_groups.model import PermissionGroup
 from src.modules.permissions.model import Permission
+from src.modules.canteen.model import MenuItem
 
 client = AsyncMongoClient(
     settings.MONGO_URL
@@ -23,6 +24,7 @@ async def init_database():
         document_models=[
             User,
             Permission,
-            PermissionGroup
+            PermissionGroup,
+            MenuItem
         ]
     )
