@@ -35,7 +35,7 @@ async def create_permission(
 
 @router.get("")
 async def get_permissions(
-    current_user: User = Depends(require_permission("permission:read")),
+    current_user: User = Depends(require_permission("permission:view")),
 ):
     permissions = await service.get_all()
 
@@ -49,7 +49,7 @@ async def get_permissions(
 @router.get("/{permission_id}")
 async def get_permission(
     permission_id: str,
-    current_user: User = Depends(require_permission("permission:read")),
+    current_user: User = Depends(require_permission("permission:view")),
 ):
     permission = await service.get_by_id(permission_id)
 

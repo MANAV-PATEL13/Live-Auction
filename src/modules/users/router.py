@@ -18,7 +18,7 @@ service = UserService()
 
 @router.get("")
 async def get_users(
-    current_user: User = Depends(require_permission("user:read")),
+    current_user: User = Depends(require_permission("user:view")),
 ):
     users = await service.get_all()
 
@@ -50,7 +50,7 @@ async def get_me(
 @router.get("/{user_id}")
 async def get_user(
     user_id: str,
-    current_user: User = Depends(require_permission("user:read")),
+    current_user: User = Depends(require_permission("user:view")),
 ):
     user = await service.get_by_id(user_id)
 

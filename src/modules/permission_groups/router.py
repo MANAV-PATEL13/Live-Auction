@@ -37,7 +37,7 @@ async def create_group(
 
 @router.get("")
 async def get_groups(
-    current_user: User = Depends(require_permission("permission_group:read")),
+    current_user: User = Depends(require_permission("permission_group:view")),
 ):
     groups = await service.get_all()
 
@@ -51,7 +51,7 @@ async def get_groups(
 @router.get("/{group_id}")
 async def get_group(
     group_id: str,
-    current_user: User = Depends(require_permission("permission_group:read")),
+    current_user: User = Depends(require_permission("permission_group:view")),
 ):
     group = await service.get_by_id(group_id)
 

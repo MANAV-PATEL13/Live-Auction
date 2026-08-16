@@ -59,6 +59,58 @@ async def get_current_user(
     return user
 
 
+async def check_user_permission(current_user: User, permission_code: str) -> bool:
+    # Superusers always pass
+    if current_user.is_superuser:
+        return True
+
+    if not current_user.group_ids:
+        return False
+
+    # Resolve group ObjectIds
+    valid_group_ids = [
+        PydanticObjectId(gid)
+        for gid in current_user.group_ids
+        if PydanticObjectId.is_valid(gid)
+    ]
+
+    if not valid_group_ids:
+        return False
+
+    # Load all active groups the user belongs to
+    groups = await PermissionGroup.find(
+        In(PermissionGroup.id, valid_group_ids),
+        PermissionGroup.is_active == True,
+    ).to_list()
+
+    # Aggregate all permission_ids across groups
+    all_permission_ids: list[str] = []
+    for group in groups:
+        all_permission_ids.extend(group.permission_ids)
+
+    if not all_permission_ids:
+        return False
+
+    # Resolve permission ObjectIds
+    valid_permission_ids = [
+        PydanticObjectId(pid)
+        for pid in all_permission_ids
+        if PydanticObjectId.is_valid(pid)
+    ]
+
+    if not valid_permission_ids:
+        return False
+
+    # Check if the required permission exists and is active
+    permission = await Permission.find_one(
+        In(Permission.id, valid_permission_ids),
+        Permission.code == permission_code,
+        Permission.is_active == True,
+    )
+
+    return permission is not None
+
+
 def require_permission(permission_code: str):
  
 
@@ -72,59 +124,13 @@ def require_permission(permission_code: str):
 
         permission_name = await permissions.get_by_code(permission_code)
 
-        if not current_user.group_ids:
+        if not permission_name:
             raise ForbiddenException(
-                f"Permission '{permission_name.name}' is required"
+                "Permission not exist"
             )
 
-        # Resolve group ObjectIds
-        valid_group_ids = [
-            PydanticObjectId(gid)
-            for gid in current_user.group_ids
-            if PydanticObjectId.is_valid(gid)
-        ]
-
-        if not valid_group_ids:
-            raise ForbiddenException(
-                f"Permission '{permission_name.name}' is required"
-            )
-
-        # Load all active groups the user belongs to
-        groups = await PermissionGroup.find(
-            In(PermissionGroup.id, valid_group_ids),
-            PermissionGroup.is_active == True,
-        ).to_list()
-
-        # Aggregate all permission_ids across groups
-        all_permission_ids: list[str] = []
-        for group in groups:
-            all_permission_ids.extend(group.permission_ids)
-
-        if not all_permission_ids:
-            raise ForbiddenException(
-                f"Permission '{permission_name.name}' is required"
-            )
-
-        # Resolve permission ObjectIds
-        valid_permission_ids = [
-            PydanticObjectId(pid)
-            for pid in all_permission_ids
-            if PydanticObjectId.is_valid(pid)
-        ]
-
-        if not valid_permission_ids:
-            raise ForbiddenException(
-                f"Permission '{permission_name.name}' is required"
-            )
-
-        # Check if the required permission exists and is active
-        permission = await Permission.find_one(
-            In(Permission.id, valid_permission_ids),
-            Permission.code == permission_code,
-            Permission.is_active == True,
-        )
-
-        if not permission:
+        has_perm = await check_user_permission(current_user, permission_code)
+        if not has_perm:
             raise ForbiddenException(
                 f"Permission '{permission_name.name}' is required"
             )
