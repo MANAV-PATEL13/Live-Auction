@@ -35,22 +35,6 @@ class InvalidCredentialsException(AppException):
                 code = 401
             )
 
-class InvalidEmailCredentialsException(AppException):
-
-    def __init__(self):
-        super().__init__(
-            message="Invalid email or not found",
-            code=401,
-        )
-
-class InvalidPasswordCredentialsException(AppException):
-
-    def __init__(self):
-        super().__init__(
-            message="Invalid password",
-            code=401,
-        )
-
 
 class InactiveUserException(AppException):
 
@@ -77,3 +61,21 @@ class ForbiddenException(AppException):
                message=message,
                code=403
           )
+
+class NotFoundException(AppException):
+
+     def __init__(self, message : str = "Resource not found"):
+          super().__init__(
+               message = message,
+               code = 404
+            )
+
+          
+class ConflictException(AppException):
+
+     def __init__(self, message : str = "Resource already exists"):
+          super().__init__(
+               message = message,
+               code = 409
+            )
+          

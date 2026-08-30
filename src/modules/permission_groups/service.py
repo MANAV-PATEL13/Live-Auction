@@ -11,6 +11,7 @@ from src.modules.permission_groups.schema import (
 from src.modules.permissions.repository import (
     PermissionRepository,
 )
+from src.modules.users.model import User
 
 
 class PermissionGroupService:
@@ -41,6 +42,7 @@ class PermissionGroupService:
     async def create(
         self,
         data: PermissionGroupCreate,
+        current_user: User,
     ) -> PermissionGroup:
 
         existing = await self.repo.get_by_name(
@@ -62,6 +64,8 @@ class PermissionGroupService:
             name=data.name,
             description=data.description,
             permission_ids=data.permission_ids,
+            created_by=current_user.id,
+            updated_by=current_user.id,
         )
 
         return await self.repo.create(group)
@@ -94,6 +98,7 @@ class PermissionGroupService:
         self,
         group_id: str,
         data: PermissionGroupUpdate,
+        current_user: User,
     ) -> PermissionGroup:
 
         group = await self.get_by_id(group_id)
@@ -124,10 +129,12 @@ class PermissionGroupService:
                 update_data["permission_ids"]
             )
 
-        return await self.repo.update(
-            group,
-            update_data,
-        )
+        for field, value in update_data.items():
+            setattr(group, field, value)
+
+        group.mark_updated(current_user.id)
+
+        return await self.repo.update(group)
 
     async def delete(
         self,

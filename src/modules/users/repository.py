@@ -1,4 +1,6 @@
 from bson import ObjectId
+from datetime import datetime, timezone
+
 from beanie import PydanticObjectId
 
 from src.modules.users.model import User
@@ -46,6 +48,8 @@ class UserRepository:
 
         for field, value in data.items():
             setattr(user, field, value)
+
+        user.updated_at = datetime.now(timezone.utc)
 
         await user.save()
 

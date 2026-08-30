@@ -4,7 +4,7 @@ from beanie import PydanticObjectId
 from beanie.operators import In
 
 from src.common.exceptions import (
-    InvalidEmailCredentialsException,
+    InvalidCredentialsException,
     InactiveUserException,
     InvalidTokenException,
     UserNotAllowedException,
@@ -43,12 +43,12 @@ async def get_current_user(
     user_id = payload.get("sub")
 
     if not user_id:
-        raise InvalidEmailCredentialsException()
+        raise InvalidCredentialsException()
 
     user = await user_repository.get_by_id(user_id)
 
     if not user:
-        raise InvalidEmailCredentialsException()
+        raise InvalidCredentialsException()
 
     if not user.is_allowed:
         raise UserNotAllowedException()

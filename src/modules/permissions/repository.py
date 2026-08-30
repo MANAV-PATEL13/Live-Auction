@@ -42,11 +42,7 @@ class PermissionRepository:
     async def update(
         self,
         permission: Permission,
-        data: dict,
     ) -> Permission:
-
-        for field, value in data.items():
-            setattr(permission, field, value)
 
         await permission.save()
 

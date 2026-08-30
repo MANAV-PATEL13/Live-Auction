@@ -26,7 +26,7 @@ async def create_group(
     data: PermissionGroupCreate,
     current_user: User = Depends(require_permission("permission_group:create")),
 ):
-    group = await service.create(data)
+    group = await service.create(data, current_user)
 
     return success_response(
         code=201,
@@ -71,6 +71,7 @@ async def update_group(
     group = await service.update(
         group_id,
         data,
+        current_user,
     )
 
     return success_response(

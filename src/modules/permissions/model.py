@@ -1,8 +1,10 @@
 from beanie import Document
 from pydantic import Field
 
+from src.common.audit import AuditMixin
 
-class Permission(Document):
+
+class Permission(AuditMixin, Document):
 
     name: str
     code: str

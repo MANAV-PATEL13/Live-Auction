@@ -24,7 +24,7 @@ async def create_permission(
     data: PermissionCreate,
     current_user: User = Depends(require_permission("permission:create")),
 ):
-    permission = await service.create(data)
+    permission = await service.create(data, current_user)
 
     return success_response(
         code=201,
@@ -69,6 +69,7 @@ async def update_permission(
     permission = await service.update(
         permission_id,
         data,
+        current_user,
     )
 
     return success_response(
