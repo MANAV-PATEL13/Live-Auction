@@ -9,6 +9,7 @@ from src.modules.permission_groups.model import PermissionGroup
 from src.modules.permissions.model import Permission
 from src.modules.canteen.model import MenuItem
 from src.modules.teams.model import Team
+from src.modules.app_config.model import AppConfig
 
 client = AsyncMongoClient(
     settings.MONGO_URL
@@ -27,6 +28,7 @@ async def init_database():
             Permission,
             PermissionGroup,
             MenuItem,
-            Team
+            Team,
+            AppConfig
         ]
     )

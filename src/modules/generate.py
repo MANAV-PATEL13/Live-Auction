@@ -27,9 +27,9 @@ def create_module(module_name: str, base_dir: str = "src/modules"):
     print(f"✅ Module '{module_name}' created successfully!")
     print(f"\nStructure:")
     print(f"{base_dir}/")
-    print(f"└── {module_name}/")
+    print(f"    └── {module_name}/")
     for file in FILES:
-        print(f"    ├── {file}")
+        print(f"        ├── {file}")
 
 
 if __name__ == "__main__":

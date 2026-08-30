@@ -5,8 +5,8 @@ from pydantic import BaseModel, Field
 
 
 class AuditMixin(BaseModel):
-    created_by : PydanticObjectId
-    updated_by : PydanticObjectId
+    created_by : PydanticObjectId | None = None
+    updated_by : PydanticObjectId | None = None
 
     created_at : datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
