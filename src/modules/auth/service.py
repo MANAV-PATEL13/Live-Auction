@@ -4,8 +4,6 @@ from src.modules.users.repository import UserRepository
 from src.common.exceptions import (
     InactiveUserException,
     InvalidCredentialsException,
-    InvalidEmailCredentialsException,
-    InvalidPasswordCredentialsException,
     UserNotAllowedException,
     InvalidTokenException
 )
@@ -46,10 +44,10 @@ class AuthService:
         user = await self.repo.get_by_email(email)
 
         if not user:
-            raise InvalidEmailCredentialsException()
+            raise InvalidCredentialsException()
 
         if not verify_password(password, user.password_hash):
-            raise InvalidPasswordCredentialsException()
+            raise InvalidCredentialsException()
 
         if not user.is_active:
             raise InactiveUserException()

@@ -3,6 +3,7 @@ from src.common.exceptions import AppException
 from src.modules.permissions.model import Permission
 from src.modules.permissions.repository import PermissionRepository
 from src.modules.permissions.schema import PermissionCreate, PermissionUpdate
+from src.modules.users.model import User
 
 class PermissionService:
 
@@ -12,6 +13,7 @@ class PermissionService:
     async def create(
         self,
         data: PermissionCreate,
+        current_user: User,
     ) -> Permission:
 
         existing = await self.repo.get_by_code(
@@ -28,6 +30,8 @@ class PermissionService:
             name=data.name,
             code=data.code,
             description=data.description,
+            created_by=current_user.id,
+            updated_by=current_user.id,
         )
 
         return await self.repo.create(permission)
@@ -57,6 +61,7 @@ class PermissionService:
         self,
         permission_id: str,
         data: PermissionUpdate,
+        current_user: User,
     ) -> Permission:
 
         permission = await self.get_by_id(
@@ -79,10 +84,12 @@ class PermissionService:
                     code=409,
                 )
 
-        return await self.repo.update(
-            permission,
-            update_data,
-        )
+        for field, value in update_data.items():
+            setattr(permission, field, value)
+
+        permission.mark_updated(current_user.id)
+
+        return await self.repo.update(permission)
 
     async def delete(
         self,

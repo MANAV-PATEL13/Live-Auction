@@ -44,11 +44,7 @@ class PermissionGroupRepository:
     async def update(
         self,
         group: PermissionGroup,
-        data: dict,
     ) -> PermissionGroup:
-
-        for field, value in data.items():
-            setattr(group, field, value)
 
         await group.save()
 
