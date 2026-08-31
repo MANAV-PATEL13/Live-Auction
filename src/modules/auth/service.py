@@ -1,8 +1,5 @@
 from src.core.security import verify_password
 from src.modules.users.repository import UserRepository
-from src.modules.sessions.repository import SessionRepository
-from src.modules.sessions.service import SessionService
-from beanie import PydanticObjectId
 
 from src.common.exceptions import (
     InactiveUserException,
@@ -20,10 +17,6 @@ class AuthService:
     def __init__(self):
 
         self.repo = UserRepository()
-        self.session_repository = SessionRepository()
-        self.session_service = SessionService(
-            self.session_repository
-        )
 
 
     async def authenticate(
@@ -45,10 +38,7 @@ class AuthService:
     async def login(
             self,
             email : str,
-            password : str,
-            device_id : str,
-            device_name : str | None= None,
-            platform : str | None = None
+            password : str
     ):
 
         user = await self.repo.get_by_email(email)
@@ -65,24 +55,12 @@ class AuthService:
         if not user.is_allowed:
             raise UserNotAllowedException()
 
-
-        session = await self.session_service.create_login_session(
-            user=user,
-            device_id=device_id,
-            device_name=device_name,
-            platform=platform
-        )
-
-
-        # create access token
         access_token = create_access_token(
-            str(user.id),
-            str(session.id)
+            str(user.id)
         )
 
         refresh_token = create_refresh_token(
-            str(user.id),
-            str(session.id),
+            str(user.id)
         )
 
         return access_token, refresh_token
@@ -106,27 +84,6 @@ class AuthService:
         if not user_id:
             raise InvalidCredentialsException()
 
-       
-
-        session_id = payload.get("session_id")
-
-        if not session_id:
-            raise InvalidTokenException()
-
-        session = await self.session_repository.get_by_id(
-            PydanticObjectId(session_id)
-        )
-
-        if not session:
-            raise InvalidTokenException()
-
-        if not session.is_active:
-            raise InvalidTokenException()
-
-        if session.user_id != PydanticObjectId(user_id):
-            raise InvalidTokenException()
-        
-        # Validate user
         user = await self.repo.get_by_id(user_id)
 
         if not user:
@@ -139,8 +96,7 @@ class AuthService:
             raise UserNotAllowedException()
 
         access_token = create_access_token(
-            str(user.id),
-            str(session.id),
+            str(user.id)
         )
 
         return access_token

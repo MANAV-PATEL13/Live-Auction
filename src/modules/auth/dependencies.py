@@ -17,15 +17,12 @@ from src.modules.permission_groups.model import PermissionGroup
 from src.modules.permissions.model import Permission
 from src.modules.permissions.repository import PermissionRepository
 
-from src.modules.sessions.repository import SessionRepository
 
 bearer_scheme = HTTPBearer()
 
 user_repository = UserRepository()
 
 permissions = PermissionRepository()
-
-session_repository = SessionRepository()
 
 
 async def get_current_user(
@@ -47,24 +44,6 @@ async def get_current_user(
 
     if not user_id:
         raise InvalidCredentialsException()
-
-    session_id = payload.get("session_id")
-
-    if not session_id:
-        raise InvalidCredentialsException()
-
-    session = await session_repository.get_by_id(
-        PydanticObjectId(session_id)
-    )
-
-    if not session:
-        raise InvalidTokenException()
-
-    if not session.is_active:
-        raise InvalidTokenException()
-
-    if session.user_id != PydanticObjectId(user_id):
-        raise InvalidTokenException()
 
     user = await user_repository.get_by_id(user_id)
 
