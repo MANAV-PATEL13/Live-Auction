@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Depends
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from src.core.jwt import decode_token
 from src.common.utils import success_response
 from src.modules.auth.schema import LoginRequest, RefreshTokenRequest
 from src.modules.auth.service import AuthService
@@ -11,8 +9,6 @@ from src.modules.users.service import UserService
 from src.modules.auth.dependencies import get_current_user
 from src.modules.users.model import User
 
-from src.modules.sessions.repository import SessionRepository
-from beanie import PydanticObjectId
 
 router = APIRouter(
     prefix = '/auth',
@@ -22,7 +18,6 @@ router = APIRouter(
 
 user_service = UserService()
 auth_service = AuthService()
-session_repository = SessionRepository()
 
 
 @router.post("/register")
@@ -46,9 +41,6 @@ async def login(data : LoginRequest):
     access_token, refresh_token = await auth_service.login(
         email=data.email,
         password=data.password,
-        device_id = data.device_id,
-        device_name=data.device_name,
-        platform=data.platform
     )
 
     return success_response(
@@ -59,32 +51,6 @@ async def login(data : LoginRequest):
         }
     )
 
-@router.post("/logout")
-async def logout(
-    current_user : User = Depends(get_current_user),
-    credentials : HTTPAuthorizationCredentials = Depends(
-        HTTPBearer()
-    )
-):
-
-    token = credentials.credentials
-    payload = decode_token(token)
-
-    session_id = payload.get("session_id")
-
-    if session_id:
-
-        session = await session_repository.get_by_id(
-            PydanticObjectId(session_id)
-        )
-
-        if session and session.is_active:
-            await session_repository.logout(session)
-
-    return success_response(
-        message="Logout successful",
-        data=None
-    )
 
 @router.post("/refresh")
 async def refresh_token(
