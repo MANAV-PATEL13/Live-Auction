@@ -6,6 +6,7 @@ from src.modules.users.router import router as users_router
 from src.modules.canteen.router import router as canteen_router
 from src.modules.teams.router import router as team_router
 from src.modules.app_config.router import router as app_config_router
+from src.modules.sessions.router import router as sessions_router
 
 router = APIRouter()
 
@@ -17,3 +18,4 @@ router.include_router(permission_group_router)
 router.include_router(canteen_router)
 router.include_router(team_router)
 router.include_router(app_config_router)
+router.include_router(sessions_router)
