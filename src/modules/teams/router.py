@@ -6,6 +6,7 @@ from src.modules.teams.schema import TeamCreate, TeamUpdate
 from src.modules.teams.service import TeamService
 from src.modules.teams.repository import TeamRepository
 from src.modules.users.model import User
+from src.modules.users.repository import UserRepository
 
 from src.common.utils import success_response
 from src.modules.auth.dependencies import require_permission
@@ -17,7 +18,13 @@ router = APIRouter(
 )
 
 repository = TeamRepository()
-service = TeamService(repository)
+
+user_repository = UserRepository()
+
+service = TeamService(
+    repository,
+    user_repository
+)
 
 
 @router.post("")
@@ -75,6 +82,7 @@ async def update_team(
         require_permission("team:update")
     ),
 ):
+    
     team = await service.update(
         team_id,
         data,
@@ -95,10 +103,10 @@ async def delete_team(
         require_permission("team:delete")
     ),
 ):
-    await service.delete(team_id)
+    team = await service.deactivate(team_id, current_user)
 
     return success_response(
         code=200,
-        message="Team deleted successfully",
+        message="Team deactivated successfully",
         data=None,
     )

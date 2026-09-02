@@ -1,4 +1,3 @@
-from bson import ObjectId
 from datetime import datetime, timezone
 
 from beanie import PydanticObjectId
@@ -11,16 +10,17 @@ class UserRepository:
     async def get_by_email(
             self,
             email : str
-    ):
-
+    ) -> User | None:
+        
         return await User.find_one(
-            User.email == email
+            User.email == email.lower().strip()
         )
 
     async def get_by_id(
             self,
-            user_id : str   
-    ):
+            user_id : str | PydanticObjectId
+    )-> User | None:
+               
         if not PydanticObjectId.is_valid(user_id):
             return None
 
@@ -28,13 +28,16 @@ class UserRepository:
             PydanticObjectId(user_id)
         )
 
-    async def get_all(self) -> list[User]:
+    async def get_all(
+            self,
+        ) -> list[User]:
+        
         return await User.find_all().to_list()
 
     async def create(
             self,
             user : User
-    ):
+    ) -> User:
 
         await user.insert()
 

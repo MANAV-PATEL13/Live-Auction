@@ -1,17 +1,17 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 class UserCreate(BaseModel):
 
-    first_name : str
+    first_name : str = Field(min_length=1)
     middle_name : str | None = None
-    last_name : str
+    last_name : str = Field(min_length=1)
 
     roll_no : str | None = None
 
     email : EmailStr
     mobile : str | None = None
 
-    password : str
+    password : str = Field(min_length=6)
 
 
 class UserResponse(BaseModel):
@@ -24,6 +24,8 @@ class UserResponse(BaseModel):
     last_name : str
 
     roll_no : str | None = None
+
+    team_id : str | None = None
 
     email : EmailStr
     mobile : str | None = None
