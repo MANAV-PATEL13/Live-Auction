@@ -15,7 +15,15 @@ class InvalidTokenException(AppException):
 
     def __init__(self):
         super().__init__(
-            message="Invalid or expired token",
+            message="Invalid or expired Token",
+            code=401,
+        )
+
+class InvalidSessionException(AppException):
+
+    def __init__(self):
+        super().__init__(
+            message="Invalid or expired Session",
             code=401,
         )
 

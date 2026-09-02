@@ -29,3 +29,11 @@ class Session(Document):
 
     class Settings:
         name = "sessions"
+
+        indexes = [
+            "user_id",
+            "is_active",
+            "login_at",
+            [("user_id",1)("is_active",1)],
+            [("user_id",1)("login_at",-1)],
+        ]
