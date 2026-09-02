@@ -3,6 +3,7 @@ from beanie import PydanticObjectId
 from src.modules.sessions.model import Session
 from src.modules.sessions.repository import SessionRepository
 from src.modules.users.model import User
+from src.common.exceptions import InvalidSessionException
 
 
 class SessionService:
@@ -47,17 +48,21 @@ class SessionService:
     async def validate_session(
         self,
         session_id: PydanticObjectId,
-    ) -> Session | None:
+        user_id : PydanticObjectId | None=None
+    ) -> Session:
 
         session = await self.repository.get_by_id(
             session_id
         )
 
         if not session:
-            return None
+            raise InvalidSessionException()
 
         if not session.is_active:
-            return None
+            raise InvalidSessionException()
+
+        if user_id and session.user_id != user_id:
+            raise InvalidSessionException()
 
         return session
 
@@ -73,10 +78,10 @@ class SessionService:
         if not session:
             return None
 
-        if session.is_active:
-            await self.repository.logout(session)
+        if not session.is_active:
+            return session
 
-        return session
+        return await self.repository.logout(session)
 
     async def get_login_history(
         self,

@@ -8,10 +8,10 @@ from src.common.exceptions import (
     InactiveUserException,
     InvalidCredentialsException,
     UserNotAllowedException,
-    InvalidTokenException
+    InvalidTokenException,
+    InvalidSessionException
 )
 
-from fastapi import HTTPException, status
 
 from src.core.jwt import create_access_token, create_refresh_token, decode_token
 
@@ -87,6 +87,15 @@ class AuthService:
 
         return access_token, refresh_token
 
+
+    async def logout(
+            self,
+            session_id : PydanticObjectId,
+    ) -> None:
+
+        await self.session_service.logout(session_id)
+
+
     async def refresh_access_token(
         self,
         refresh_token: str,
@@ -111,20 +120,20 @@ class AuthService:
         session_id = payload.get("session_id")
 
         if not session_id:
-            raise InvalidTokenException()
+            raise InvalidSessionException()
 
         session = await self.session_repository.get_by_id(
             PydanticObjectId(session_id)
         )
 
         if not session:
-            raise InvalidTokenException()
+            raise InvalidSessionException()
 
         if not session.is_active:
-            raise InvalidTokenException()
+            raise InvalidSessionException()
 
         if session.user_id != PydanticObjectId(user_id):
-            raise InvalidTokenException()
+            raise InvalidSessionException()
         
         # Validate user
         user = await self.repo.get_by_id(user_id)

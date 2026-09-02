@@ -7,6 +7,7 @@ from src.common.exceptions import (
     InvalidCredentialsException,
     InactiveUserException,
     InvalidTokenException,
+    InvalidSessionException,
     UserNotAllowedException,
     ForbiddenException,
 )
@@ -18,6 +19,7 @@ from src.modules.permissions.model import Permission
 from src.modules.permissions.repository import PermissionRepository
 
 from src.modules.sessions.repository import SessionRepository
+from src.modules.sessions.service import SessionService
 
 bearer_scheme = HTTPBearer()
 
@@ -26,6 +28,8 @@ user_repository = UserRepository()
 permissions = PermissionRepository()
 
 session_repository = SessionRepository()
+
+session_service = SessionService(session_repository)
 
 
 async def get_current_user(
@@ -51,21 +55,13 @@ async def get_current_user(
     session_id = payload.get("session_id")
 
     if not session_id:
-        raise InvalidCredentialsException()
+        raise InvalidTokenException()
 
-    session = await session_repository.get_by_id(
-        PydanticObjectId(session_id)
+    await session_service.validate_session(
+        session_id=PydanticObjectId(session_id),
+        user_id=PydanticObjectId(user_id)
     )
-
-    if not session:
-        raise InvalidTokenException()
-
-    if not session.is_active:
-        raise InvalidTokenException()
-
-    if session.user_id != PydanticObjectId(user_id):
-        raise InvalidTokenException()
-
+    
     user = await user_repository.get_by_id(user_id)
 
     if not user:

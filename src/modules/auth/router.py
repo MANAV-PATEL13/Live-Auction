@@ -14,6 +14,8 @@ from src.modules.users.model import User
 from src.modules.sessions.repository import SessionRepository
 from beanie import PydanticObjectId
 
+from src.common.exceptions import InvalidTokenException
+
 router = APIRouter(
     prefix = '/auth',
     tags = ["Authentication"]
@@ -23,6 +25,7 @@ router = APIRouter(
 user_service = UserService()
 auth_service = AuthService()
 session_repository = SessionRepository()
+
 
 
 @router.post("/register")
@@ -68,19 +71,15 @@ async def logout(
 ):
 
     token = credentials.credentials
-    payload = decode_token(token)
 
+    payload = decode_token(token)
+    
     session_id = payload.get("session_id")
 
-    if session_id:
-
-        session = await session_repository.get_by_id(
-            PydanticObjectId(session_id)
-        )
-
-        if session and session.is_active:
-            await session_repository.logout(session)
-
+    await auth_service.logout(
+        PydanticObjectId(session_id)
+    )
+    
     return success_response(
         message="Logout successful",
         data=None
