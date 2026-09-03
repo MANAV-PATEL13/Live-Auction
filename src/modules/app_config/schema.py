@@ -19,6 +19,8 @@ class AppConfigCreate(BaseModel):
 
     update_message: str | None = None
 
+    registration_open: bool = False
+
     android_store_url: str | None = None
 
 class AppConfigUpdate(BaseModel):
@@ -39,6 +41,8 @@ class AppConfigUpdate(BaseModel):
 
     update_message: str | None = None
 
+    registration_open: bool | None = None
+
     android_store_url: str | None = None
 
 
@@ -56,6 +60,8 @@ class AppConfigResponse(BaseModel):
     latest_version: str
 
     update_message: str | None
+
+    registration_open: bool
 
     android_store_url: str | None
 
@@ -82,5 +88,7 @@ class AppConfigPublicResponse(BaseModel):
     latest_version: str
 
     update_message: str | None
+
+    registration_open: bool
 
     android_store_url: str | None

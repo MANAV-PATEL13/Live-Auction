@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from beanie import Document, PydanticObjectId
 from pydantic import EmailStr, Field
-from pymongo import ASCENDING
+from pymongo import ASCENDING, IndexModel
 
 class User(Document):
 
@@ -42,15 +42,17 @@ class User(Document):
         name = "users"
 
         indexes = [
-            {
-                "key" : [("email",ASCENDING)],
-                "unique" : True,
-                "name" : "uq_user_email",
-            },
-            [
-                ("mobile",ASCENDING)
-            ],
-            [
-                ("team_id",ASCENDING),
-            ],
+            IndexModel(
+                [("email", ASCENDING)],
+                unique=True,
+                name="uq_user_email",
+            ),
+            IndexModel(
+                [("mobile", ASCENDING)],
+                name="idx_user_mobile",
+            ),
+            IndexModel(
+                [("team_id", ASCENDING)],
+                name="idx_user_team_id",
+            ),
         ]
