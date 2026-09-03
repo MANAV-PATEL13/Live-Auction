@@ -11,6 +11,7 @@ from src.modules.canteen.model import MenuItem
 from src.modules.teams.model import Team
 from src.modules.app_config.model import AppConfig
 from src.modules.sessions.model import Session
+from src.modules.registration.model import Registration
 
 client = AsyncMongoClient(
     settings.MONGO_URL
@@ -31,6 +32,7 @@ async def init_database():
             MenuItem,
             Team,
             AppConfig,
-            Session
+            Session,
+            Registration
         ]
     )

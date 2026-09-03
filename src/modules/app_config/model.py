@@ -15,5 +15,7 @@ class AppConfig(Document, AuditMixin):
 
     android_store_url : str | None=None
 
+    registration_open: bool = False
+
     class Settings:
         name = "app_config"

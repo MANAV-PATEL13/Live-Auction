@@ -1,6 +1,6 @@
 from beanie import Document, PydanticObjectId
 from pydantic import Field
-from pymongo import ASCENDING
+from pymongo import ASCENDING, IndexModel
 
 from src.common.audit import AuditMixin
 
@@ -19,21 +19,24 @@ class Team( AuditMixin, Document):
         name = "teams"
 
         indexes = [
-            {
-                "keys" : [
-                    ("code",ASCENDING),
-                ],
-                "unique" : True,
-                "name" : "uq_team_code"
-            },
+            IndexModel(
+                [("code", ASCENDING)],
+                unique=True,
+                name="uq_team_code",
+            ),
 
-            [
-                ("is_active",ASCENDING),
-            ],
-            [
-                ("captain_id",ASCENDING),
-            ],
-            [
-                ("vice_captain_id",ASCENDING),
-            ],
+            IndexModel(
+                [("is_active", ASCENDING)],
+                name="idx_team_is_active",
+            ),
+
+            IndexModel(
+                [("captain_id", ASCENDING)],
+                name="idx_team_captain_id",
+            ),
+
+            IndexModel(
+                [("vice_captain_id", ASCENDING)],
+                name="idx_team_vice_captain_id",
+            ),
         ]

@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from beanie import Document, PydanticObjectId
 from pydantic import Field
+from pymongo import ASCENDING, DESCENDING, IndexModel
 
 
 class Session(Document):
@@ -31,9 +32,24 @@ class Session(Document):
         name = "sessions"
 
         indexes = [
-            "user_id",
-            "is_active",
-            "login_at",
-            [("user_id",1)("is_active",1)],
-            [("user_id",1)("login_at",-1)],
+            IndexModel(
+                [("user_id", ASCENDING)],
+                name="idx_session_user_id",
+            ),
+            IndexModel(
+                [("is_active", ASCENDING)],
+                name="idx_session_is_active",
+            ),
+            IndexModel(
+                [("login_at", ASCENDING)],
+                name="idx_session_login_at",
+            ),
+            IndexModel(
+                [("user_id", ASCENDING), ("is_active", ASCENDING)],
+                name="idx_session_user_is_active",
+            ),
+            IndexModel(
+                [("user_id", ASCENDING), ("login_at", DESCENDING)],
+                name="idx_session_user_login_at",
+            ),
         ]

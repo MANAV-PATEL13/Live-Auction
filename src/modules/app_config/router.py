@@ -40,6 +40,22 @@ async def get_app_config(
     )
 
 
+@router.get(
+    "/public",
+    response_model=ResponseModel[AppConfigPublicResponse],
+)
+async def get_public_app_config(
+    service: AppConfigService = Depends(get_service),
+):
+    config = await service.get()
+
+    return success_response(
+        code=200,
+        message="App configuration fetched successfully",
+        data=config,
+    )
+
+
 @router.post(
     "",
     response_model=ResponseModel[AppConfigResponse],
