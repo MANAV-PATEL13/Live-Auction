@@ -56,7 +56,20 @@ class TeamService:
         if not user:
             raise NotFoundException(
                 "User not found"
+
             )
+        
+        if not user.is_active:
+            raise NotFoundException(
+                "User is inactive"
+            )
+
+        
+        if not user.is_allowed:
+            raise NotFoundException(
+                "User is not allowed"
+            )
+
 
         return object_id
 
@@ -69,7 +82,7 @@ class TeamService:
     ) -> Team:
 
         name = self._normalize_name(data.name)
-        code = self._normalize_name(data.code)
+        code = self._normalize_code(data.code)
 
         existing = await self.repository.get_by_code(code)
 
@@ -91,7 +104,27 @@ class TeamService:
             raise ConflictException(
                 "Captain and vice-captain cannot be the same user"
             )
-        
+
+        if captain_id:
+
+            existing = await self.repository.get_by_caption_id(
+                captain_id
+            )
+            if existing:
+                raise ConflictException(
+                    "User is already caption of another team"
+                )
+
+            
+        if vice_captain_id:
+
+            existing = await self.repository.get_by_vice_caption_id(
+                vice_captain_id
+            )
+            if existing:
+                raise ConflictException(
+                    "User is already vice caption of another team"
+                )
 
         team = Team(
             name=name,

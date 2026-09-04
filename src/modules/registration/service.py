@@ -74,7 +74,7 @@ class RegistrationService:
             dodge_ball=data.dodge_ball,
             chess=data.chess,
             carrom=data.carrom,
-            tenis=data.tennis,
+            tennis=data.tennis,
 
             single_talent=(
                 data.single_talent.strip()
@@ -131,8 +131,6 @@ class RegistrationService:
                 else None
             )
 
-        if "tennis" in update_data:
-            update_data["tenis"] = update_data.pop("tennis")
 
         for field, value in update_data.items():
             setattr(

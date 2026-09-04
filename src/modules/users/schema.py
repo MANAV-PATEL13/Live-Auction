@@ -34,6 +34,15 @@ class UserResponse(BaseModel):
     is_allowed : bool    
     is_superuser : bool
 
+class UserUpdate(BaseModel):
+
+    first_name: str | None = None
+    middle_name: str | None = None
+    last_name: str | None = None
+
+    roll_no: str | None = None
+    email: EmailStr | None = None
+    mobile: str | None = None
 
 class UserGroupsUpdate(BaseModel):
     group_ids : list[str]
