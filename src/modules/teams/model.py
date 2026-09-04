@@ -12,6 +12,8 @@ class Team( AuditMixin, Document):
 
     captain_id : PydanticObjectId | None = None
     vice_captain_id : PydanticObjectId | None = None
+
+    pushp_balance : int = 6250
     
     is_active : bool = True
 

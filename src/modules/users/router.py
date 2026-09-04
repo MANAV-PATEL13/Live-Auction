@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from src.modules.users.schema import UserGroupsUpdate
+from src.modules.users.schema import UserGroupsUpdate, UserUpdate
 from src.modules.users.service import UserService
 from src.modules.auth.dependencies import get_current_user, require_permission
 from src.modules.users.model import User
@@ -57,6 +57,26 @@ async def get_user(
     return success_response(
         code=200,
         message="User fetched successfully",
+        data=user,
+    )
+
+
+@router.put("/{user_id}")
+async def update_user(
+    user_id: str,
+    data: UserUpdate,
+    current_user: User = Depends(
+        require_permission("user:update")
+    ),
+):
+    user = await service.update(
+        user_id,
+        data,
+    )
+
+    return success_response(
+        code=200,
+        message="User updated successfully",
         data=user,
     )
 

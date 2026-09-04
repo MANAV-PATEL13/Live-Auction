@@ -7,16 +7,16 @@ class RegistrationCreate(BaseModel):
 
     tshirt_size: TshirtSize
 
-    cricket: SportLevel
-    volleyball: SportLevel
-    kabaddi: SportLevel
-    kho_kho: SportLevel
-    foosball: SportLevel
-    frisbee: SportLevel
-    dodge_ball: SportLevel
-    chess: SportLevel
-    carrom: SportLevel
-    tennis: SportLevel
+    cricket: SportLevel = SportLevel.NO
+    volleyball: SportLevel = SportLevel.NO
+    kabaddi: SportLevel = SportLevel.NO
+    kho_kho: SportLevel = SportLevel.NO
+    foosball: SportLevel = SportLevel.NO
+    frisbee: SportLevel = SportLevel.NO
+    dodge_ball: SportLevel = SportLevel.NO
+    chess: SportLevel = SportLevel.NO
+    carrom: SportLevel = SportLevel.NO
+    tennis: SportLevel = SportLevel.NO
 
     single_talent: str | None = Field(
         default=None,
@@ -29,9 +29,8 @@ class RegistrationCreate(BaseModel):
     )
 
     qna_contribution : int = Field(
-            default=None,
-            ge=0,
-            le=100
+        ge=0,
+        le=100
     )
 
 

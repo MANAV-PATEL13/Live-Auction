@@ -14,13 +14,13 @@ class TeamCreate(BaseModel):
 
 class TeamUpdate(BaseModel):
 
-    name : str = Field(default=None, min_length=2, max_length=100)
-    code : str = Field(default=None, min_length=1, max_length=30)
+    name : str | None = Field(default=None, min_length=2, max_length=100)
+    code : str | None = Field(default=None, min_length=1, max_length=30)
     image_url : str | None = None
-
+    
     captain_id : str | None = None
     vice_captain_id : str | None = None
-    
+
     is_active : bool | None = None
 
 
@@ -34,6 +34,8 @@ class TeamResponse(BaseModel):
 
     captain_id : str | None = None
     vice_captain_id : str | None = None
+
+    pushp_balance : int
 
     is_active : bool
 

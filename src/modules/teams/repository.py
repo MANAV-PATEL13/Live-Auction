@@ -33,6 +33,27 @@ class TeamRepository:
         )
 
 
+    async def get_by_caption_id(
+            self,
+            user_id : PydanticObjectId,
+    ) -> Team | None:
+
+        return await Team.find_one(
+            Team.captain_id == user_id,
+            Team.is_active == True,
+        )
+
+    async def get_by_vice_caption_id(
+            self,
+            user_id : PydanticObjectId,
+    ) -> Team | None:
+
+        return await Team.find_one(
+            Team.vice_captain_id == user_id,
+            Team.is_active == True,
+        )
+
+
     async def get_all(
             self,
             active_only : bool = False,

@@ -30,18 +30,19 @@ class Registration( Document, AuditMixin):
     tshirt_size : TshirtSize
 
     # sports
-    cricket : SportLevel
-    volleyball : SportLevel
-    kabaddi : SportLevel
-    kho_kho : SportLevel
-    foosball : SportLevel
-    frisbee : SportLevel
-    dodge_ball : SportLevel
-    chess : SportLevel
-    carrom : SportLevel
-    tenis : SportLevel
+    cricket : SportLevel = SportLevel.NO
+    volleyball : SportLevel = SportLevel.NO
+    kabaddi : SportLevel = SportLevel.NO
+    kho_kho : SportLevel = SportLevel.NO
+    foosball : SportLevel = SportLevel.NO
+    frisbee : SportLevel = SportLevel.NO
+    dodge_ball : SportLevel = SportLevel.NO
+    chess : SportLevel = SportLevel.NO
+    carrom : SportLevel = SportLevel.NO
+    tennis : SportLevel = SportLevel.NO
 
     single_talent : str | None = None
+
     group_talent_contribution : int = Field(
         ge=0,
         le=100
@@ -61,9 +62,5 @@ class Registration( Document, AuditMixin):
                 [("user_id",ASCENDING)],
                 unique=True,
                 name="uq_registration_user",
-            ),
-            IndexModel(
-                [("is_completed",ASCENDING)],
-                name="idx_registration_completed",
-            ),
+            )
         ]
