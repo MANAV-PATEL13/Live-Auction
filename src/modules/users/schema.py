@@ -10,6 +10,7 @@ class UserCreate(BaseModel):
 
     email : EmailStr
     mobile : str | None = None
+    image_url : str | None = None
 
     password : str = Field(min_length=6)
 
@@ -29,6 +30,7 @@ class UserResponse(BaseModel):
 
     email : EmailStr
     mobile : str | None = None
+    image_url : str | None = None
 
     is_active : bool    
     is_allowed : bool    
@@ -43,6 +45,7 @@ class UserUpdate(BaseModel):
     roll_no: str | None = None
     email: EmailStr | None = None
     mobile: str | None = None
+    image_url: str | None = None
 
 class UserGroupsUpdate(BaseModel):
     group_ids : list[str]
