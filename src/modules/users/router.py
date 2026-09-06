@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi.responses import StreamingResponse
+
+import io
 
 from src.modules.users.schema import UserGroupsUpdate, UserUpdate
 from src.modules.users.service import UserService
@@ -40,11 +43,78 @@ async def get_me(
             "id": str(current_user.id),
             "name": current_user.name,
             "email": current_user.email,
+            "image_url": current_user.image_url,
             "is_active": current_user.is_active,
             "is_allowed": current_user.is_allowed,
             "is_superuser": current_user.is_superuser,
         },
     )
+
+
+@router.post("/import")
+async def import_users(
+    file: UploadFile = File(...),
+    current_user : User = Depends(
+        require_permission("user:create")
+    )
+):
+    
+    if not file.filename:
+        return success_response(
+            code=400,
+            message="CSV file is required",
+            data=None
+        )
+
+    if not file.filename.lower().endswith(".csv"):
+        return success_response(
+            code=400,
+            message="Only CSV files are allowed",
+            data=None
+        )
+
+    content = await file.read()
+
+    result = await service.import_csv(content)
+
+    return success_response(
+        code=200,
+        message="User CSV import completed",
+        data=result
+    )
+
+
+@router.get("/import/template")
+async def download_user_import_template(
+    current_user: User = Depends(
+        require_permission("user:create")
+    ),
+):
+    csv_content = (
+        "first_name,middle_name,last_name,roll_no,email,mobile,image_url\n"
+        "Manav,,Patel,101,manav@example.com,9876543210,https://example.com/photo.jpg\n"
+    )
+
+    return StreamingResponse(
+        io.BytesIO(
+            csv_content.encode("utf-8")
+        ),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition":
+                'attachment; filename="users_import_template.csv"'
+        },
+    )
+
+
+@router.get("/export")
+async def export_users(
+    current_user : User = Depends(
+        require_permission("user:view")
+    ),
+):
+
+    return await service.export_csv()
 
 
 @router.get("/{user_id}")
@@ -136,3 +206,4 @@ async def delete_user(
         message="User deleted successfully",
         data=None,
     )
+

@@ -22,6 +22,7 @@ class User(Document):
 
     email : EmailStr
     mobile : str | None = None
+    image_url : str | None = None
 
     password_hash : str
 
