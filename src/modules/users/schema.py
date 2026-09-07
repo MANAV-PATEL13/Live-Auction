@@ -49,3 +49,8 @@ class UserUpdate(BaseModel):
 
 class UserGroupsUpdate(BaseModel):
     group_ids : list[str]
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password : str = Field(min_length=1)
+    new_password : str = Field(min_length=6)

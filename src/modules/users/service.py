@@ -6,11 +6,10 @@ from fastapi.responses import StreamingResponse
 from beanie import PydanticObjectId
 
 from src.modules.users.model import User
-from src.modules.users.schema import UserCreate, UserUpdate, UserGroupsUpdate
+from src.modules.users.schema import UserCreate, UserUpdate, UserGroupsUpdate, ChangePasswordRequest
 from src.modules.users.repository import UserRepository
-from src.core.security import hash_password
-from src.common.exceptions import EmailAreadyExistsException, NotFoundException, AppException
-
+from src.core.security import hash_password, verify_password
+from src.common.exceptions import EmailAreadyExistsException, NotFoundException, AppException, InvalidCredentialsException
 
 from pydantic import ValidationError
 from src.modules.users.csv_schema import UserCSVRow, UserImportRowReport, UserImportSummary
@@ -196,6 +195,50 @@ class UserService:
             update_data,
         )
 
+
+    async def reset_password(
+            self,
+            user_id : str | PydanticObjectId,
+    ) -> User:
+        """Admin resets a user's password to the default (roll_no@321)."""
+
+        user = await self.repo.get_by_id(user_id)
+
+        if not user:
+            raise NotFoundException(
+                "User not found"
+            )
+
+        default_password = (
+            f"{user.roll_no}@321"
+            if user.roll_no
+            else f"{str(user.id)}@321"
+        )
+
+        return await self.repo.update(
+            user,
+            {"password_hash": hash_password(default_password)},
+        )
+
+    async def change_password(
+            self,
+            user_id: str | PydanticObjectId,
+            data: "ChangePasswordRequest",
+    ) -> User:
+        """User changes their own password after verifying the current one."""
+
+        user = await self.repo.get_by_id(user_id)
+
+        if not user:
+            raise NotFoundException("User not found")
+
+        if not verify_password(data.current_password, user.password_hash):
+            raise InvalidCredentialsException()
+
+        return await self.repo.update(
+            user,
+            {"password_hash": hash_password(data.new_password)},
+        )
 
     async def update_groups(
             self,

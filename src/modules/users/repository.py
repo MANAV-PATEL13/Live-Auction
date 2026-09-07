@@ -58,6 +58,7 @@ class UserRepository:
 
         return user
 
+       
     async def delete(
             self,
             user: User,

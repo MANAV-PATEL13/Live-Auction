@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse
 
 import io
 
-from src.modules.users.schema import UserGroupsUpdate, UserUpdate
+from src.modules.users.schema import UserGroupsUpdate, UserUpdate, ChangePasswordRequest
 from src.modules.users.service import UserService
 from src.modules.auth.dependencies import get_current_user, require_permission
 from src.modules.users.model import User
@@ -177,6 +177,47 @@ async def activate_user(
         code=200,
         message="User activated successfully",
         data=user,
+    )
+
+
+@router.put("/me/password")
+async def change_own_password(
+    data: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Authenticated user changes their own password.
+    Requires verifying the current password first.
+    """
+    await service.change_password(
+        str(current_user.id),
+        data,
+    )
+
+    return success_response(
+        code=200,
+        message="Password changed successfully",
+        data=None,
+    )
+
+
+@router.put("/{user_id}/password")
+async def reset_user_password(
+    user_id: str,
+    current_user: User = Depends(
+        require_permission("user:update")
+    ),
+):
+    """
+    Admin resets a user's password to the default (roll_no@321).
+    Requires 'user:update' permission.
+    """
+    await service.reset_password(user_id)
+
+    return success_response(
+        code=200,
+        message="Password reset to default successfully",
+        data=None,
     )
 
 
