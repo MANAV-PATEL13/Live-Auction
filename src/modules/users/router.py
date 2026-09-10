@@ -248,3 +248,57 @@ async def delete_user(
         data=None,
     )
 
+@router.post("/base-price/import")
+async def import_base_prices(
+    file: UploadFile = File(...),
+    current_user: User = Depends(
+        require_permission("user:update")
+    ),
+):
+    if not file.filename:
+        return success_response(
+            code=400,
+            message="CSV file is required",
+            data=None,
+        )
+
+    if not file.filename.lower().endswith(".csv"):
+        return success_response(
+            code=400,
+            message="Only CSV files are allowed",
+            data=None,
+        )
+
+    content = await file.read()
+
+    result = await service.import_base_prices(
+        content
+    )
+
+    return success_response(
+        code=200,
+        message="Base price CSV import completed",
+        data=result,
+    )
+
+@router.get("/base-price/import/template")
+async def download_base_price_template(
+    current_user: User = Depends(
+        require_permission("user:update")
+    ),
+):
+    csv_content = (
+        "roll_no,base_price\n"
+        "101,500\n"
+    )
+
+    return StreamingResponse(
+        io.BytesIO(
+            csv_content.encode("utf-8")
+        ),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition":
+                'attachment; filename="base_price_import_template.csv"'
+        },
+    )

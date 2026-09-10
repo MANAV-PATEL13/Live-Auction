@@ -12,8 +12,8 @@ from src.core.security import hash_password, verify_password
 from src.common.exceptions import EmailAreadyExistsException, NotFoundException, AppException, InvalidCredentialsException
 
 from pydantic import ValidationError
-from src.modules.users.csv_schema import UserCSVRow, UserImportRowReport, UserImportSummary
-
+from src.modules.users.csv_schema import UserCSVRow, UserImportRowReport, UserImportSummary, UserBasePriceImportSummary
+from src.modules.users.csv_service import UserCSVService
 
 class UserService:
 
@@ -611,4 +611,103 @@ class UserService:
                 "Content-Disposition":
                     'attachment; filename="users_export.csv"'
             },
+        )
+
+    async def import_base_prices(
+        self,
+        file_content: bytes,
+    ) -> UserBasePriceImportSummary:
+
+        valid_rows, failed_rows = (
+            UserCSVService.parse_base_price(
+                file_content
+            )
+        )
+
+        report = failed_rows.copy()
+
+        updated = 0
+        failed = len(failed_rows)
+
+        for row_number, row in valid_rows:
+
+            users = await User.find(
+                User.roll_no == row.roll_no
+            ).to_list()
+
+            if not users:
+
+                failed += 1
+
+                report.append(
+                    UserImportRowReport(
+                        row=row_number,
+                        status="failed",
+                        reason="User not found",
+                    )
+                )
+
+                continue
+
+            if len(users) > 1:
+
+                failed += 1
+
+                report.append(
+                    UserImportRowReport(
+                        row=row_number,
+                        status="failed",
+                        reason=(
+                            "Multiple users found "
+                            "with this roll number"
+                        ),
+                    )
+                )
+
+                continue
+
+            user = users[0]
+
+            if not user.is_registered:
+
+                failed += 1
+
+                report.append(
+                    UserImportRowReport(
+                        row=row_number,
+                        status="failed",
+                        reason=(
+                            "User is not registered "
+                            "for participation"
+                        ),
+                    )
+                )
+
+                continue
+
+            await self.repo.update(
+                user,
+                {
+                    "base_price": row.base_price,
+                },
+            )
+
+            updated += 1
+
+            report.append(
+                UserImportRowReport(
+                    row=row_number,
+                    status="updated",
+                    reason=(
+                        f"Base price updated to "
+                        f"{row.base_price}"
+                    ),
+                )
+            )
+
+        return UserBasePriceImportSummary(
+            total_rows=len(valid_rows) + len(failed_rows),
+            updated=updated,
+            failed=failed,
+            report=report,
         )
