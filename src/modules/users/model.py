@@ -17,9 +17,15 @@ class User(Document):
     )
 
     team_id: PydanticObjectId | None = None
+    team_price: int = Field(
+        default=0,
+        ge=0,
+    )
+
+    is_registered : bool = False
+    base_price : int = Field(default=0, ge=0)
 
     roll_no : str | None = None
-
     email : EmailStr
     mobile : str | None = None
     image_url : str | None = None
@@ -55,5 +61,13 @@ class User(Document):
             IndexModel(
                 [("team_id", ASCENDING)],
                 name="idx_user_team_id",
+            ),
+            IndexModel(
+                [("is_registered", ASCENDING)],
+                name="idx_user_is_registered",
+            ),
+            IndexModel(
+                [("roll_no", ASCENDING)],
+                name="idx_user_roll_no",
             ),
         ]

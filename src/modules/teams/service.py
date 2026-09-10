@@ -1,4 +1,6 @@
+from datetime import datetime, timezone
 from beanie import PydanticObjectId
+from src.core.database_transaction import mongo_transaction
 
 from src.common.exceptions import ConflictException, NotFoundException
 from src.modules.team_assignments.repository import TeamAssignmentRepository
@@ -119,8 +121,8 @@ class TeamService:
             image_url=data.image_url,
             captain_id=None,
             vice_captain_id=None,
-            initial_balance=data.initial_balance,
-            balance=data.initial_balance,
+            initial_balance=6250,
+            balance=6250,
             is_active=data.is_active,
             created_by=current_user.id,
             updated_by=current_user.id,
@@ -165,88 +167,69 @@ class TeamService:
                     f"Team with code '{update_data['code']}' already exists"
                 )
 
-        # Validate captain if provided
-        if "captain_id" in update_data:
-            update_data["captain_id"] = await self._validate_team_member(
-                team.id, update_data["captain_id"], "Captain"
-            )
-
-        # Validate vice_captain if provided
-        if "vice_captain_id" in update_data:
-            update_data["vice_captain_id"] = await self._validate_team_member(
-                team.id, update_data["vice_captain_id"], "Vice-Captain"
-            )
-
-        captain_id = update_data.get("captain_id", team.captain_id)
-        vice_captain_id = update_data.get("vice_captain_id", team.vice_captain_id)
-
-        if captain_id and vice_captain_id and captain_id == vice_captain_id:
-            raise ConflictException(
-                "Captain and vice-captain cannot be the same user"
-            )
-
         for field, value in update_data.items():
             setattr(team, field, value)
 
         team.mark_updated(current_user.id)
         return await self.repository.update(team)
 
-    async def set_captain(
+    async def update_leadership(
         self,
         team_id: PydanticObjectId,
-        captain_id: str,
-        current_user: User,
+        captain_id: PydanticObjectId | None,
+        vice_captain_id: PydanticObjectId | None,
+        current_user_id: PydanticObjectId,
     ) -> Team:
-        team = await self.get_by_id(team_id)
-        cid = await self._validate_team_member(team.id, captain_id, "Captain")
+        team = await self.repository.get_by_id(team_id)
 
-        if cid and team.vice_captain_id and cid == team.vice_captain_id:
+        if not team:
+            raise NotFoundException("team not found")
+
+        if not team.is_active:
             raise ConflictException(
-                "Captain and Vice-Captain cannot be the same user"
+                "cannot update leadership of inactive team"
             )
 
-        team.captain_id = cid
-        team.mark_updated(current_user.id)
-        return await self.repository.update(team)
-
-    async def remove_captain(
-        self,
-        team_id: PydanticObjectId,
-        current_user: User,
-    ) -> Team:
-        team = await self.get_by_id(team_id)
-        team.captain_id = None
-        team.mark_updated(current_user.id)
-        return await self.repository.update(team)
-
-    async def set_vice_captain(
-        self,
-        team_id: PydanticObjectId,
-        vice_captain_id: str,
-        current_user: User,
-    ) -> Team:
-        team = await self.get_by_id(team_id)
-        vcid = await self._validate_team_member(
-            team.id, vice_captain_id, "Vice-Captain"
-        )
-
-        if vcid and team.captain_id and vcid == team.captain_id:
+        # --------------------------------------------------
+        # Captain and vice-captain cannot be the same person
+        # --------------------------------------------------
+        if (
+            captain_id is not None
+            and vice_captain_id is not None
+            and captain_id == vice_captain_id
+        ):
             raise ConflictException(
-                "Captain and Vice-Captain cannot be the same user"
+                "captain and vice-captain cannot be the same user"
             )
 
-        team.vice_captain_id = vcid
-        team.mark_updated(current_user.id)
-        return await self.repository.update(team)
+        # --------------------------------------------------
+        # Validate captain membership
+        # --------------------------------------------------
+        if captain_id is not None:
+            captain = await self.user_repository.get_by_id(captain_id)
+            if not captain:
+                raise NotFoundException("captain user not found")
+            if captain.team_id != team.id:
+                raise ConflictException("captain must be a member of this team")
 
-    async def remove_vice_captain(
-        self,
-        team_id: PydanticObjectId,
-        current_user: User,
-    ) -> Team:
-        team = await self.get_by_id(team_id)
-        team.vice_captain_id = None
-        team.mark_updated(current_user.id)
+        # --------------------------------------------------
+        # Validate vice-captain membership
+        # --------------------------------------------------
+        if vice_captain_id is not None:
+            vice_captain = await self.user_repository.get_by_id(vice_captain_id)
+            if not vice_captain:
+                raise NotFoundException("vice-captain user not found")
+            if vice_captain.team_id != team.id:
+                raise ConflictException("vice-captain must be a member of this team")
+
+        # --------------------------------------------------
+        # Update
+        # --------------------------------------------------
+        team.captain_id = captain_id
+        team.vice_captain_id = vice_captain_id
+        team.updated_by = current_user_id
+        team.updated_at = datetime.now(timezone.utc)
+
         return await self.repository.update(team)
 
     async def deactivate(
@@ -258,9 +241,250 @@ class TeamService:
         if not team.is_active:
             return team
 
+        users = await User.find(
+            User.team_id == team.id
+        ).to_list()
+
+        if users:
+            raise ConflictException(
+                "cannot deactivate a team that has players"
+            )
+
         team.is_active = False
         team.mark_updated(current_user.id)
         return await self.repository.update(team)
+
+    async def assign_player(
+        self,
+        team_id: PydanticObjectId,
+        user_id: PydanticObjectId,
+        price: int,
+        current_user_id: PydanticObjectId,
+    ) -> User:
+        async with mongo_transaction() as session:
+            team = await Team.get(team_id, session=session)
+            if not team:
+                raise NotFoundException("Team not found")
+            if not team.is_active:
+                raise ConflictException("Cannot assign player to inactive team")
+
+            user = await User.get(user_id, session=session)
+            if not user:
+                raise NotFoundException("User not found")
+            if not user.is_active:
+                raise ConflictException("Cannot assign inactive user")
+
+            if user.team_id is not None:
+                raise ConflictException("User already belongs to a team")
+
+            if team.balance < price:
+                raise ConflictException(
+                    f"Insufficient Pushp balance. Available: {team.balance}, required: {price}"
+                )
+
+            balance_before = team.balance
+            balance_after = balance_before - price
+            now = datetime.now(timezone.utc)
+
+            team.balance = balance_after
+            team.updated_by = current_user_id
+            team.updated_at = now
+            await team.save(session=session)
+
+            user.team_id = team.id
+            user.team_price = price
+            user.updated_at = now
+            await user.save(session=session)
+
+            transaction = TeamWalletTransaction(
+                team_id=team.id,
+                user_id=user.id,
+                transaction_type=TransactionType.ASSIGNMENT,
+                amount=-price,
+                balance_before=balance_before,
+                balance_after=balance_after,
+                description=f"Player assigned to team: {user.name}",
+                created_by=current_user_id,
+                created_at=now,
+            )
+            await transaction.insert(session=session)
+
+            return user
+
+    async def remove_player(
+        self,
+        team_id: PydanticObjectId,
+        user_id: PydanticObjectId,
+        current_user_id: PydanticObjectId,
+    ) -> User:
+        async with mongo_transaction() as session:
+            team = await Team.get(team_id, session=session)
+            if not team:
+                raise NotFoundException("Team not found")
+
+            user = await User.get(user_id, session=session)
+            if not user:
+                raise NotFoundException("User not found")
+
+            if user.team_id != team.id:
+                raise ConflictException("User does not belong to this team")
+
+            price = user.team_price
+            balance_before = team.balance
+            balance_after = balance_before + price
+            now = datetime.now(timezone.utc)
+
+            team.balance = balance_after
+            team.updated_by = current_user_id
+            team.updated_at = now
+
+            if team.captain_id == user.id:
+                team.captain_id = None
+            if team.vice_captain_id == user.id:
+                team.vice_captain_id = None
+
+            await team.save(session=session)
+
+            user.team_id = None
+            user.team_price = 0
+            user.updated_at = now
+
+            await user.save(session=session)
+
+            transaction = TeamWalletTransaction(
+                team_id=team.id,
+                user_id=user.id,
+                transaction_type=TransactionType.REMOVAL,
+                amount=price,
+                balance_before=balance_before,
+                balance_after=balance_after,
+                description=f"Player removed from team: {user.name}",
+                created_by=current_user_id,
+                created_at=now,
+            )
+            await transaction.insert(session=session)
+
+            return user
+
+    async def transfer_player(
+        self,
+        source_team_id: PydanticObjectId,
+        user_id: PydanticObjectId,
+        destination_team_id: PydanticObjectId,
+        current_user_id: PydanticObjectId,
+        new_price: int | None = None,
+    ) -> User:
+        async with mongo_transaction() as session:
+            source_team = await Team.get(source_team_id, session=session)
+            if not source_team:
+                raise NotFoundException("source team not found")
+
+            destination_team = await Team.get(destination_team_id, session=session)
+            if not destination_team:
+                raise NotFoundException("destination team not found")
+            if not destination_team.is_active:
+                raise ConflictException("cannot transfer player to inactive team")
+
+            if source_team.id == destination_team.id:
+                raise ConflictException("source and destination teams must be different")
+
+            user = await User.get(user_id, session=session)
+            if not user:
+                raise NotFoundException("user not found")
+
+            if user.team_id != source_team.id:
+                raise ConflictException("user does not belong to source team")
+
+            old_price = user.team_price
+            price = old_price if new_price is None else new_price
+
+            source_balance_before = source_team.balance
+            source_balance_after = source_balance_before + old_price
+
+            destination_balance_before = destination_team.balance
+            if destination_balance_before < price:
+                raise ConflictException(
+                    f"insufficient Pushp balance in destination team. available: {destination_balance_before}, required: {price}"
+                )
+            destination_balance_after = destination_balance_before - price
+
+            now = datetime.now(timezone.utc)
+
+            source_team.balance = source_balance_after
+            source_team.updated_by = current_user_id
+            source_team.updated_at = now
+
+            if source_team.captain_id == user.id:
+                source_team.captain_id = None
+            if source_team.vice_captain_id == user.id:
+                source_team.vice_captain_id = None
+
+            await source_team.save(session=session)
+
+            destination_team.balance = destination_balance_after
+            destination_team.updated_by = current_user_id
+            destination_team.updated_at = now
+
+            await destination_team.save(session=session)
+
+            user.team_id = destination_team.id
+            user.team_price = price
+            user.updated_at = now
+
+            await user.save(session=session)
+
+            source_transaction = TeamWalletTransaction(
+                team_id=source_team.id,
+                user_id=user.id,
+                transaction_type=TransactionType.TRANSFER_OUT,
+                amount=old_price,
+                balance_before=source_balance_before,
+                balance_after=source_balance_after,
+                description=f"Player transferred to team {destination_team.name}",
+                created_by=current_user_id,
+                created_at=now,
+            )
+            await source_transaction.insert(session=session)
+
+            destination_transaction = TeamWalletTransaction(
+                team_id=destination_team.id,
+                user_id=user.id,
+                transaction_type=TransactionType.TRANSFER_IN,
+                amount=-price,
+                balance_before=destination_balance_before,
+                balance_after=destination_balance_after,
+                description=f"Player transferred from team {source_team.name}",
+                created_by=current_user_id,
+                created_at=now,
+            )
+            await destination_transaction.insert(session=session)
+
+            return user
+
+    async def get_team_members(
+        self,
+        team_id: PydanticObjectId,
+    ) -> list[User]:
+        team = await self.repository.get_by_id(team_id)
+
+        if not team:
+            raise NotFoundException("team not found")
+
+        return await self.user_repository.get_by_team_id(team_id)
+
+    async def get_user_team(
+        self,
+        user_id: PydanticObjectId,
+    ) -> Team | None:
+        user = await self.user_repository.get_by_id(user_id)
+
+        if not user:
+            raise NotFoundException("user not found")
+
+        if user.team_id is None:
+            return None
+
+        return await self.repository.get_by_id(user.team_id)
 
     # --- Wallet & Ledger ---
     async def get_wallet_summary(
