@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserCSVRow(BaseModel):
@@ -27,3 +27,15 @@ class UserImportSummary(BaseModel):
     report : list[UserImportRowReport]
 
 
+class UserBasePriceImportSummary(BaseModel):
+    total_rows : int
+    created : int
+    failed : int
+    report : list[UserImportRowReport]
+
+
+class UserBasePriceCSVRow(BaseModel):
+    roll_no: str
+    base_price: int = Field(
+        ge=0
+    )

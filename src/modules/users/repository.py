@@ -65,3 +65,11 @@ class UserRepository:
     ) -> None:
 
         await user.delete()
+
+    async def get_by_team_id(
+        self,
+        team_id: PydanticObjectId,
+    ) -> list[User]:
+        return await User.find(
+            User.team_id == team_id
+        ).to_list()

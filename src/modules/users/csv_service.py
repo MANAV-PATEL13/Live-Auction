@@ -2,8 +2,9 @@ import csv
 import io
 
 from pydantic import ValidationError
+from src.common.csv_service import CSVService
 
-from src.modules.users.csv_schema import UserCSVRow, UserImportRowReport
+from src.modules.users.csv_schema import UserCSVRow, UserImportRowReport, UserBasePriceCSVRow
 
 class UserCSVService:
 
@@ -24,67 +25,106 @@ class UserCSVService:
         "image_url"
     }
 
+    BASE_PRICE_REQUIRED_COLUMNS = {
+        "roll_no",
+        "base_price",
+    }
+
     @classmethod
     def parse(
         cls,
         file_content : bytes,
-    ) -> tuple[list[tuple[int,UserCSVRow]],list[UserImportRowReport]]:
+    ) -> tuple[
+            list[tuple[int,UserCSVRow]],
+            list[UserImportRowReport]
+        ]:
 
-        valid_rows : list[tuple[int,UserCSVRow]] = []
-        failed_rows : list[UserImportRowReport] = []
-
-        try:
-            content = file_content.decode("utf-8-sig")
-        except UnicodeDecodeError:
-            raise ValueError(
-                "CSV file must be UTF-8 encoded"
-            )
-
-        reader = csv.DictReader(
-            io.StringIO(content)
+        columns, rows = CSVService.read(
+            file_content
         )
 
-        if not reader.fieldnames:
-            raise ValueError(
-                "CSV file is empty or has no header"
-            )
-
-        columns = {
-            column.strip()
-            for column in reader.fieldnames
-            if column
-        }
-
-        missing_columns = (
-            cls.REQUIRED_COLUMNS - columns
+        CSVService.validate_columns(
+            columns,
+            cls.REQUIRED_COLUMNS,
         )
 
-        if missing_columns:
-            raise ValueError(
-                "Missing required columns: "
-                + ", ".join(sorted(missing_columns))
-            )
+        valid_rows = []
+        failed_rows = []
 
-        for row_number, raw_row in enumerate(
-            reader,
-            start=2
+        for row_number, row_data in enumerate(
+            rows,
+            start=2,
         ):
 
-            # normalize column values
-            row_data = {}
-
-            for column in cls.ALL_COLUMNS:
-                value = raw_row.get(column)
-
-                if value is not None:
-                    value = value.strip()
-
-                row_data[column] = value or None
-
+            user_data = {
+                column : row_data.get(column)
+                for column in cls.ALL_COLUMNS
+            }
 
             try:
                 row = UserCSVRow(
-                    **row_data
+                    **user_data
+                )
+
+                valid_rows.append(
+                    (row_number, row)
+                )
+
+            except ValidationError as exc:
+
+                messages = []
+
+                for error in exc.errors():
+
+                    field = ".".join(
+                        str(x)
+                        for x in error["loc"]
+                    )
+
+                    messages.append(
+                        f"{field}: {error['msg']}"
+                    )
+
+                failed_rows.append(
+                    UserImportRowReport(
+                        row=row_number,
+                        status="failed",
+                        reason="; ".join(messages)
+                    )
+                )
+
+            return valid_rows, 
+
+
+    @classmethod
+    def parse_base_price(
+        cls,
+        file_content: bytes,
+    ) -> tuple[
+        list[tuple[int, UserBasePriceCSVRow]],
+        list[UserImportRowReport],
+    ]:
+
+        columns, rows = CSVService.read(
+            file_content
+        )
+
+        CSVService.validate_columns(
+            columns,
+            cls.BASE_PRICE_REQUIRED_COLUMNS,
+        )
+
+        valid_rows = []
+        failed_rows = []
+
+        for row_number, row_data in enumerate(
+            rows,
+            start=2,
+        ):
+            try:
+                row = UserBasePriceCSVRow(
+                    roll_no=row_data.get("roll_no"),
+                    base_price=row_data.get("base_price"),
                 )
 
                 valid_rows.append(
@@ -109,7 +149,7 @@ class UserCSVService:
                     UserImportRowReport(
                         row=row_number,
                         status="failed",
-                        reason="; ".join(messages)
+                        reason="; ".join(messages),
                     )
                 )
 
