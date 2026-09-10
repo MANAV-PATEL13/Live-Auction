@@ -12,8 +12,8 @@ from src.modules.teams.model import Team
 from src.modules.app_config.model import AppConfig
 from src.modules.sessions.model import Session
 from src.modules.registration.model import Registration
-from src.modules.team_assignments.model import TeamAssignment
 from src.modules.teams.wallet_model import TeamWalletTransaction
+from src.modules.team_assignments.model import TeamAssignment
 
 client = AsyncMongoClient(
     settings.MONGO_URL
@@ -36,7 +36,7 @@ async def init_database():
             AppConfig,
             Session,
             Registration,
-            TeamAssignment,
             TeamWalletTransaction,
+            TeamAssignment,
         ]
     )

@@ -26,7 +26,7 @@ class TshirtSize(str, Enum):
 class Registration( Document, AuditMixin):
 
     user_id : PydanticObjectId
-
+    apc_year : int
     tshirt_size : TshirtSize
 
     # sports
@@ -62,5 +62,14 @@ class Registration( Document, AuditMixin):
                 [("user_id",ASCENDING)],
                 unique=True,
                 name="uq_registration_user",
-            )
+            ),
+            IndexModel(
+                [("apc_year",ASCENDING)],
+                name="idx_registration_apc_yser",
+            ),
+            IndexModel(
+                [("user_id",ASCENDING),("apc_year",ASCENDING)],
+                unique=True,
+                name="uq_registration_user_year",
+            ),
         ]

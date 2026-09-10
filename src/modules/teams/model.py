@@ -13,8 +13,14 @@ class Team( AuditMixin, Document):
     captain_id : PydanticObjectId | None = None
     vice_captain_id : PydanticObjectId | None = None
 
-    initial_balance : int = 6250
-    balance : int = 6250
+    initial_balance: int = Field(
+        default=6250,
+        ge=0,
+    )
+    balance: int = Field(
+        default=6250,
+        ge=0,
+    )
     
     is_active : bool = True
 

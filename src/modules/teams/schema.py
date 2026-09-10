@@ -8,7 +8,6 @@ class TeamCreate(BaseModel):
     image_url: str | None = None
     captain_id: str | None = None
     vice_captain_id: str | None = None
-    initial_balance: int = Field(default=6250, ge=0)
     is_active: bool = True
 
 
@@ -16,8 +15,6 @@ class TeamUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=100)
     code: str | None = Field(default=None, min_length=1, max_length=30)
     image_url: str | None = None
-    captain_id: str | None = None
-    vice_captain_id: str | None = None
     is_active: bool | None = None
 
 
@@ -37,12 +34,9 @@ class TeamResponse(BaseModel):
     updated_at: datetime
 
 
-class SetCaptainRequest(BaseModel):
-    captain_id: str
-
-
-class SetViceCaptainRequest(BaseModel):
-    vice_captain_id: str
+class TeamLeadershipUpdate(BaseModel):
+    captain_id: str | None = None
+    vice_captain_id: str | None = None
 
 
 class WalletAdjustmentRequest(BaseModel):
@@ -70,5 +64,27 @@ class TeamWalletResponse(BaseModel):
     balance: int
     total_spent: int
     total_refunded: int
-    active_players_count: int
     total_transactions: int
+
+
+class TeamMemberAssign(BaseModel):
+    price: int = Field(
+        ge=0,
+        description="Player purchase price in Pushp",
+    )
+
+
+class TeamMemberTransferRequest(BaseModel):
+    source_team_id: str
+    price: int | None = Field(
+        default=None,
+        ge=0,
+    )
+
+
+from src.modules.users.schema import UserResponse
+
+class TeamMembersResponse(BaseModel):
+    team_id: str
+    team_name: str
+    members: list[UserResponse]

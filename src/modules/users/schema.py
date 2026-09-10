@@ -42,10 +42,20 @@ class UserUpdate(BaseModel):
     middle_name: str | None = None
     last_name: str | None = None
 
+    base_price : int | None = Field(
+        default=None,
+        ge=0,
+    )
+
+    group_ids: list[str] | None = None
+
     roll_no: str | None = None
     email: EmailStr | None = None
     mobile: str | None = None
     image_url: str | None = None
+
+    is_active: bool | None = None
+    is_allowed: bool | None = None
 
 class UserGroupsUpdate(BaseModel):
     group_ids : list[str]
@@ -53,4 +63,4 @@ class UserGroupsUpdate(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     current_password : str = Field(min_length=1)
-    new_password : str = Field(min_length=6)
+    new_password : str = Field(min_length=6)
