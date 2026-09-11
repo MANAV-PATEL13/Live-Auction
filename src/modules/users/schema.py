@@ -16,25 +16,26 @@ class UserCreate(BaseModel):
 
 
 class UserResponse(BaseModel):
+    id: str
+    name: str
+    first_name: str
+    middle_name: str | None = None
+    last_name: str
 
-    id : str
+    roll_no: str | None = None
+    email: EmailStr
+    mobile: str | None = None
+    image_url: str | None = None
 
-    name : str
-    first_name : str
-    middle_name : str | None = None
-    last_name : str
+    team_id: str | None = None
+    team_price: int = 0
 
-    roll_no : str | None = None
+    base_price: int = 0
+    is_registered: bool = False
 
-    team_id : str | None = None
-
-    email : EmailStr
-    mobile : str | None = None
-    image_url : str | None = None
-
-    is_active : bool    
-    is_allowed : bool    
-    is_superuser : bool
+    is_active: bool
+    is_allowed: bool
+    is_superuser: bool
 
 class UserUpdate(BaseModel):
 

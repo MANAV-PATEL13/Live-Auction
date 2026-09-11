@@ -5,24 +5,20 @@ from pydantic import Field
 from pymongo import ASCENDING, DESCENDING, IndexModel
 
 
-class TransactionType(str, Enum):
-    ASSIGNMENT = "ASSIGNMENT"
-    REMOVAL = "REMOVAL"
-    TRANSFER_IN = "TRANSFER_IN"
-    TRANSFER_OUT = "TRANSFER_OUT"
-    AUCTION_PURCHASE = "AUCTION_PURCHASE"
-    AUCTION_ROLLBACK = "AUCTION_ROLLBACK"
-    MANUAL_ADJUSTMENT = "MANUAL_ADJUSTMENT"
+from src.modules.teams.wallet_constants import WalletTransactionType
+
+TransactionType = WalletTransactionType
 
 
 class TeamWalletTransaction(Document):
     team_id: PydanticObjectId
-    transaction_type: TransactionType
+    transaction_type: WalletTransactionType
     amount: int
     balance_before: int
     balance_after: int
     user_id: PydanticObjectId | None = None
     description: str | None = None
+    reference_id: str | None = None
     created_by: PydanticObjectId | None = None
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)

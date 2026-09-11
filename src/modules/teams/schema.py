@@ -6,8 +6,6 @@ class TeamCreate(BaseModel):
     name: str = Field(min_length=2, max_length=100)
     code: str = Field(min_length=1, max_length=30)
     image_url: str | None = None
-    captain_id: str | None = None
-    vice_captain_id: str | None = None
     is_active: bool = True
 
 
@@ -23,10 +21,13 @@ class TeamResponse(BaseModel):
     name: str
     code: str
     image_url: str | None = None
+
     captain_id: str | None = None
     vice_captain_id: str | None = None
+
     initial_balance: int
     balance: int
+
     is_active: bool
     created_by: str | None = None
     updated_by: str | None = None
@@ -67,19 +68,17 @@ class TeamWalletResponse(BaseModel):
     total_transactions: int
 
 
-class TeamMemberAssign(BaseModel):
-    price: int = Field(
-        ge=0,
-        description="Player purchase price in Pushp",
-    )
+class TeamMemberAssignmentRequest(BaseModel):
+    price: int = Field(ge=0)
+
+
+# Backward compatibility alias
+TeamMemberAssign = TeamMemberAssignmentRequest
 
 
 class TeamMemberTransferRequest(BaseModel):
     source_team_id: str
-    price: int | None = Field(
-        default=None,
-        ge=0,
-    )
+    price: int | None = Field(default=None, ge=0)
 
 
 from src.modules.users.schema import UserResponse
