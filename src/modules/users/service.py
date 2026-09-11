@@ -115,6 +115,13 @@ class UserService:
             },
         )
 
+    async def get_user_team(
+        self,
+        user_id: str,
+    ):
+        from src.modules.teams.service import TeamService
+        return await TeamService().get_user_team(user_id)
+
 
     async def update(
             self,

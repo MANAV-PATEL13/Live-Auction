@@ -117,6 +117,32 @@ async def export_users(
     return await service.export_csv()
 
 
+@router.get("/{user_id}/team")
+async def get_user_team(
+    user_id: str,
+    current_user: User = Depends(
+        require_permission("team:view")
+    ),
+):
+    team = await service.get_user_team(user_id)
+
+    data = None
+
+    if team:
+        data = {
+            "id": str(team.id),
+            "name": team.name,
+            "code": team.code,
+            "balance": team.balance,
+        }
+
+    return success_response(
+        code=200,
+        message="User team fetched successfully",
+        data=data,
+    )
+
+
 @router.get("/{user_id}")
 async def get_user(
     user_id: str,
