@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class TeamCreate(BaseModel):
@@ -34,10 +34,18 @@ class TeamResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    @field_validator("id", "captain_id", "vice_captain_id", "created_by", "updated_by", mode="before")
+    @classmethod
+    def convert_objectid(cls, v):
+        if v is not None:
+            return str(v)
+        return v
+
 
 class TeamLeadershipUpdate(BaseModel):
     captain_id: str | None = None
     vice_captain_id: str | None = None
+    vice_captain_price: int = Field(default=0, ge=0)
 
 
 class WalletAdjustmentRequest(BaseModel):
@@ -57,6 +65,13 @@ class TeamWalletTransactionResponse(BaseModel):
     created_by: str | None = None
     created_at: datetime
 
+    @field_validator("id", "team_id", "user_id", "created_by", mode="before")
+    @classmethod
+    def convert_objectid(cls, v):
+        if v is not None:
+            return str(v)
+        return v
+
 
 class TeamWalletResponse(BaseModel):
     team_id: str
@@ -66,6 +81,13 @@ class TeamWalletResponse(BaseModel):
     total_spent: int
     total_refunded: int
     total_transactions: int
+
+    @field_validator("team_id", mode="before")
+    @classmethod
+    def convert_objectid(cls, v):
+        if v is not None:
+            return str(v)
+        return v
 
 
 class TeamMemberAssignmentRequest(BaseModel):
@@ -87,3 +109,10 @@ class TeamMembersResponse(BaseModel):
     team_id: str
     team_name: str
     members: list[UserResponse]
+
+    @field_validator("team_id", mode="before")
+    @classmethod
+    def convert_objectid(cls, v):
+        if v is not None:
+            return str(v)
+        return v

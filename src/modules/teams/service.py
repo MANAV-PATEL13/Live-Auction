@@ -176,22 +176,22 @@ class TeamService:
         team = await self._get_active_team(team_id)
         user = await self._get_active_user(user_id)
 
-        if user.team_id != team.id:
+        if user.team_id is None or str(user.team_id) != str(team.id):
             raise AppException(
                 message="User is not a member of this team",
                 code=400,
             )
 
-        refund = user.team_price
+        refund = user.team_price or 0
 
         balance_before = team.balance
         team.balance += refund
 
         # Clear captain / vice captain if necessary
-        if team.captain_id == user.id:
+        if team.captain_id and str(team.captain_id) == str(user.id):
             team.captain_id = None
 
-        if team.vice_captain_id == user.id:
+        if team.vice_captain_id and str(team.vice_captain_id) == str(user.id):
             team.vice_captain_id = None
 
         user.team_id = None
@@ -239,20 +239,20 @@ class TeamService:
         user = await self._get_active_user(user_id)
 
         # Same team
-        if source_team.id == destination_team.id:
+        if str(source_team.id) == str(destination_team.id):
             raise AppException(
                 message="Source and destination teams must be different",
                 code=400,
             )
 
         # Verify actual membership
-        if user.team_id != source_team.id:
+        if user.team_id is None or str(user.team_id) != str(source_team.id):
             raise AppException(
                 message="User is not a member of the source team",
                 code=400,
             )
 
-        old_price = user.team_price
+        old_price = user.team_price or 0
         new_price = old_price if price is None else price
 
         if new_price < 0:
@@ -286,10 +286,10 @@ class TeamService:
         # Captain / vice captain cleanup
         # -----------------------------------------------------
 
-        if source_team.captain_id == user.id:
+        if source_team.captain_id and str(source_team.captain_id) == str(user.id):
             source_team.captain_id = None
 
-        if source_team.vice_captain_id == user.id:
+        if source_team.vice_captain_id and str(source_team.vice_captain_id) == str(user.id):
             source_team.vice_captain_id = None
 
         # -----------------------------------------------------
@@ -469,9 +469,10 @@ class TeamService:
         team_id: PydanticObjectId,
         captain_id: PydanticObjectId | None,
         vice_captain_id: PydanticObjectId | None,
-        current_user_id: PydanticObjectId,
+        vice_captain_price: int = 0,
+        current_user_id: PydanticObjectId | None = None,
     ) -> Team:
-        team = await self.team_repo.get_by_id(team_id)
+        team = await self.team_repo.get_by_id(self._object_id(team_id))
 
         if not team:
             raise NotFoundException("Team not found")
@@ -484,28 +485,127 @@ class TeamService:
         if (
             captain_id is not None
             and vice_captain_id is not None
-            and captain_id == vice_captain_id
+            and str(captain_id) == str(vice_captain_id)
         ):
             raise ConflictException(
                 "Captain and vice-captain cannot be the same user"
             )
 
+        # 1. Handle Captain (Direct assignment with 0 M)
         if captain_id is not None:
-            captain = await self.user_repo.get_by_id(captain_id)
+            captain = await self.user_repo.get_by_id(self._object_id(captain_id))
             if not captain:
                 raise NotFoundException("Captain user not found")
-            if captain.team_id != team.id:
-                raise ConflictException("Captain must be a member of this team")
 
+            # Check if captain is in another team
+            if captain.team_id is not None and str(captain.team_id) != str(team.id):
+                raise ConflictException(
+                    "Selected captain is already assigned to another squad. Please transfer or remove them first."
+                )
+
+            # Auto-join team if not already in team
+            if captain.team_id is None:
+                captain.team_id = team.id
+                captain.team_price = 0
+                await self.user_repo.update(
+                    captain,
+                    {
+                        "team_id": team.id,
+                        "team_price": 0,
+                    },
+                )
+                await TeamWalletTransaction(
+                    team_id=team.id,
+                    user_id=captain.id,
+                    transaction_type=WalletTransactionType.PLAYER_ASSIGNMENT,
+                    amount=0,
+                    balance_before=team.balance,
+                    balance_after=team.balance,
+                    description=f"Direct Captain Assignment: {captain.name}",
+                    reference_id=str(captain.id),
+                    created_by=current_user_id,
+                ).insert()
+
+            team.captain_id = captain.id
+        else:
+            team.captain_id = None
+
+        # 2. Handle Vice Captain (Custom value assignment)
         if vice_captain_id is not None:
-            vice_captain = await self.user_repo.get_by_id(vice_captain_id)
+            vice_captain = await self.user_repo.get_by_id(self._object_id(vice_captain_id))
             if not vice_captain:
                 raise NotFoundException("Vice-captain user not found")
-            if vice_captain.team_id != team.id:
-                raise ConflictException("Vice-captain must be a member of this team")
 
-        team.captain_id = captain_id
-        team.vice_captain_id = vice_captain_id
+            if vice_captain.team_id is not None and str(vice_captain.team_id) != str(team.id):
+                raise ConflictException(
+                    "Selected vice-captain is already assigned to another squad. Please transfer or remove them first."
+                )
+
+            vc_price = max(0, int(vice_captain_price or 0))
+
+            # Auto-join team if not already in team
+            if vice_captain.team_id is None:
+                if team.balance < vc_price:
+                    raise ConflictException(
+                        f"Insufficient team balance. Team has {team.balance} M, but Vice Captain price is {vc_price} M."
+                    )
+
+                balance_before = team.balance
+                team.balance -= vc_price
+                vice_captain.team_id = team.id
+                vice_captain.team_price = vc_price
+
+                await self.user_repo.update(
+                    vice_captain,
+                    {
+                        "team_id": team.id,
+                        "team_price": vc_price,
+                    },
+                )
+
+                await TeamWalletTransaction(
+                    team_id=team.id,
+                    user_id=vice_captain.id,
+                    transaction_type=WalletTransactionType.PLAYER_ASSIGNMENT,
+                    amount=-vc_price,
+                    balance_before=balance_before,
+                    balance_after=team.balance,
+                    description=f"Assigned Vice-Captain {vice_captain.name} (Custom price: {vc_price} M)",
+                    reference_id=str(vice_captain.id),
+                    created_by=current_user_id,
+                ).insert()
+            else:
+                # Already in team: if a new custom price is provided and differs
+                old_price = vice_captain.team_price or 0
+                if vc_price > 0 and vc_price != old_price:
+                    diff = vc_price - old_price
+                    if diff > 0 and team.balance < diff:
+                        raise ConflictException(
+                            f"Insufficient team balance for price adjustment. Need {diff} M more."
+                        )
+                    balance_before = team.balance
+                    team.balance -= diff
+                    vice_captain.team_price = vc_price
+                    await self.user_repo.update(
+                        vice_captain,
+                        {"team_price": vc_price},
+                    )
+                    await TeamWalletTransaction(
+                        team_id=team.id,
+                        user_id=vice_captain.id,
+                        transaction_type=WalletTransactionType.MANUAL_ADJUSTMENT,
+                        amount=-diff,
+                        balance_before=balance_before,
+                        balance_after=team.balance,
+                        description=f"Vice-Captain price adjustment for {vice_captain.name}: {old_price} M -> {vc_price} M",
+                        reference_id=str(vice_captain.id),
+                        created_by=current_user_id,
+                    ).insert()
+
+            team.vice_captain_id = vice_captain.id
+        else:
+            team.vice_captain_id = None
+
         team.updated_by = current_user_id
         team.updated_at = datetime.now(timezone.utc)
 
