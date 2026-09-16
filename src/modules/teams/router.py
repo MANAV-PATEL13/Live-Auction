@@ -129,6 +129,7 @@ async def update_leadership(
             if data.vice_captain_id
             else None
         ),
+        vice_captain_price=data.vice_captain_price or 0,
         current_user_id=current_user.id,
     )
 

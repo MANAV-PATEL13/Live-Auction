@@ -50,9 +50,9 @@ class TeamRepository:
         if active_only:
             return await Team.find(
                 Team.is_active == True
-            ).to_list()
+            ).sort("+code", "+name").to_list()
 
-        return await Team.find_all().to_list()
+        return await Team.find_all().sort("+code", "+name").to_list()
 
     async def update(self, team: Team) -> Team:
         await team.save()
