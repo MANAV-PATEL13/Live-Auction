@@ -29,6 +29,7 @@ def get_service() -> AppConfigService:
     response_model=ResponseModel[AppConfigResponse],
 )
 async def get_app_config(
+    current_user: User = Depends(require_permission("appconfig:view")),
     service: AppConfigService = Depends(get_service),
 ):
     config = await service.get()
@@ -63,7 +64,7 @@ async def get_public_app_config(
 async def create_app_config(
     data: AppConfigUpdate,
     current_user: User = Depends(
-        require_permission("appconfig:create")
+        require_permission("appconfig:update")
     ),
     service: AppConfigService = Depends(get_service),
 ):
