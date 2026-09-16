@@ -9,6 +9,7 @@ from src.modules.app_config.router import router as app_config_router
 from src.modules.sessions.router import router as sessions_router
 from src.modules.registration.router import router as registration_router
 from src.modules.team_assignments.router import router as team_assignments_router
+from src.modules.auction.router import router as auction_router
 
 router = APIRouter()
 
@@ -23,3 +24,4 @@ router.include_router(app_config_router)
 router.include_router(sessions_router)
 router.include_router(registration_router)
 router.include_router(team_assignments_router)
+router.include_router(auction_router)

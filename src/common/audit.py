@@ -16,6 +16,13 @@ class AuditMixin(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc)
     )
 
+    def mark_created(
+            self,
+            user_id : PydanticObjectId,
+    ) -> None:
+        self.created_by = user_id
+        self.created_at = datetime.now(timezone.utc)
+
     def mark_updated(
             self,
             user_id : PydanticObjectId,

@@ -76,6 +76,14 @@ async def get_current_user(
     return user
 
 
+async def require_superuser(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if not current_user.is_superuser:
+        raise ForbiddenException("Superuser access required")
+    return current_user
+
+
 async def check_user_permission(current_user: User, permission_code: str) -> bool:
     # Superusers always pass
     if current_user.is_superuser:
