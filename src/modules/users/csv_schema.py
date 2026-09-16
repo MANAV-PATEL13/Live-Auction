@@ -29,7 +29,8 @@ class UserImportSummary(BaseModel):
 
 class UserBasePriceImportSummary(BaseModel):
     total_rows : int
-    created : int
+    updated : int = 0
+    created : int = 0
     failed : int
     report : list[UserImportRowReport]
 
