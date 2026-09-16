@@ -28,3 +28,7 @@ class PermissionGroupUpdate(BaseModel):
     permission_ids: list[str] | None = None
 
     is_active: bool | None = None
+
+
+class GroupAssignUsersRequest(BaseModel):
+    user_ids: list[str] = Field(default_factory=list)
