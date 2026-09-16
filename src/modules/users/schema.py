@@ -55,6 +55,7 @@ class UserUpdate(BaseModel):
     mobile: str | None = None
     image_url: str | None = None
 
+    is_registered: bool | None = None
     is_active: bool | None = None
     is_allowed: bool | None = None
 

@@ -12,6 +12,7 @@ from src.core.security import hash_password, verify_password
 from src.common.exceptions import EmailAreadyExistsException, NotFoundException, AppException, InvalidCredentialsException
 
 from pydantic import ValidationError
+from src.core.config import settings
 from src.modules.users.csv_schema import UserCSVRow, UserImportRowReport, UserImportSummary, UserBasePriceImportSummary
 from src.modules.users.csv_service import UserCSVService
 
@@ -19,6 +20,17 @@ class UserService:
 
     def __init__(self):
         self.repo = UserRepository()
+
+    @staticmethod
+    def get_default_password(identifier: str) -> str:
+        pattern = settings.RESET_PASSWORD_PATTERN
+        if "{roll_no}" in pattern:
+            return pattern.replace("{roll_no}", identifier)
+        if "{id}" in pattern:
+            return pattern.replace("{id}", identifier)
+        if "{identifier}" in pattern:
+            return pattern.replace("{identifier}", identifier)
+        return f"{identifier}{pattern}"
 
 
     async def create_user(
@@ -197,6 +209,11 @@ class UserService:
             if part
         )
 
+        # If base_price is set > 0 and registration not explicitly provided, automatically mark as registered
+        if "base_price" in update_data and update_data["base_price"] is not None and update_data["base_price"] > 0:
+            if "is_registered" not in update_data or update_data["is_registered"] is None:
+                update_data["is_registered"] = True
+
         return await self.repo.update(
             user,
             update_data,
@@ -207,7 +224,7 @@ class UserService:
             self,
             user_id : str | PydanticObjectId,
     ) -> User:
-        """Admin resets a user's password to the default (roll_no@321)."""
+        """Admin resets a user's password to the default pattern configured in settings."""
 
         user = await self.repo.get_by_id(user_id)
 
@@ -216,11 +233,8 @@ class UserService:
                 "User not found"
             )
 
-        default_password = (
-            f"{user.roll_no}@321"
-            if user.roll_no
-            else f"{str(user.id)}@321"
-        )
+        identifier = user.roll_no if user.roll_no else str(user.id)
+        default_password = self.get_default_password(identifier)
 
         return await self.repo.update(
             user,
@@ -495,7 +509,7 @@ class UserService:
                 if part
             )
 
-            password = f"{roll_no}@321"
+            password = self.get_default_password(roll_no)
 
             user = User(
                 name=name,
@@ -637,77 +651,54 @@ class UserService:
         failed = len(failed_rows)
 
         for row_number, row in valid_rows:
+            target_roll = str(row.roll_no).strip()
 
             users = await User.find(
-                User.roll_no == row.roll_no
+                User.roll_no == target_roll
             ).to_list()
 
             if not users:
+                # Fallback: case-insensitive query or regex
+                users = await User.find({
+                    "roll_no": {"$regex": f"^{target_roll}$", "$options": "i"}
+                }).to_list()
 
+            if not users:
                 failed += 1
-
                 report.append(
                     UserImportRowReport(
                         row=row_number,
                         status="failed",
-                        reason="User not found",
+                        reason=f"User with roll number '{target_roll}' not found",
                     )
                 )
-
                 continue
 
             if len(users) > 1:
-
-                failed += 1
-
-                report.append(
-                    UserImportRowReport(
-                        row=row_number,
-                        status="failed",
-                        reason=(
-                            "Multiple users found "
-                            "with this roll number"
-                        ),
-                    )
-                )
-
-                continue
-
-            user = users[0]
-
-            if not user.is_registered:
-
-                failed += 1
-
-                report.append(
-                    UserImportRowReport(
-                        row=row_number,
-                        status="failed",
-                        reason=(
-                            "User is not registered "
-                            "for participation"
-                        ),
-                    )
-                )
-
-                continue
+                # If multiple users have the same roll number, pick the registered one or update the primary
+                registered_users = [u for u in users if u.is_registered]
+                if len(registered_users) == 1:
+                    user = registered_users[0]
+                else:
+                    user = users[0]
+            else:
+                user = users[0]
 
             await self.repo.update(
                 user,
                 {
                     "base_price": row.base_price,
+                    "is_registered": True,  # Setting a starting base price marks user as registered participant
                 },
             )
 
             updated += 1
-
             report.append(
                 UserImportRowReport(
                     row=row_number,
                     status="updated",
                     reason=(
-                        f"Base price updated to "
-                        f"{row.base_price}"
+                        f"Base price updated to {row.base_price} M for {user.name} (#{target_roll})"
                     ),
                 )
             )

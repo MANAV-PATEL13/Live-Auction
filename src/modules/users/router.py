@@ -42,8 +42,17 @@ async def get_me(
         data={
             "id": str(current_user.id),
             "name": current_user.name,
+            "first_name": current_user.first_name,
+            "middle_name": current_user.middle_name,
+            "last_name": current_user.last_name,
+            "roll_no": current_user.roll_no,
             "email": current_user.email,
+            "mobile": current_user.mobile,
             "image_url": current_user.image_url,
+            "team_id": str(current_user.team_id) if current_user.team_id else None,
+            "team_price": current_user.team_price,
+            "base_price": current_user.base_price,
+            "is_registered": current_user.is_registered,
             "is_active": current_user.is_active,
             "is_allowed": current_user.is_allowed,
             "is_superuser": current_user.is_superuser,
@@ -235,7 +244,7 @@ async def reset_user_password(
     ),
 ):
     """
-    Admin resets a user's password to the default (roll_no@321).
+    Admin resets a user's password to the default password pattern.
     Requires 'user:update' permission.
     """
     await service.reset_password(user_id)
