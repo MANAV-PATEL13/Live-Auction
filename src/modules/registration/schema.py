@@ -1,67 +1,66 @@
+from datetime import datetime
+from typing import Any
 from pydantic import BaseModel, Field
-
-from src.modules.registration.model import SportLevel, TshirtSize
 
 
 class RegistrationCreate(BaseModel):
-
-    tshirt_size: TshirtSize
-
-    cricket: SportLevel = SportLevel.NO
-    volleyball: SportLevel = SportLevel.NO
-    kabaddi: SportLevel = SportLevel.NO
-    kho_kho: SportLevel = SportLevel.NO
-    foosball: SportLevel = SportLevel.NO
-    frisbee: SportLevel = SportLevel.NO
-    dodge_ball: SportLevel = SportLevel.NO
-    chess: SportLevel = SportLevel.NO
-    carrom: SportLevel = SportLevel.NO
-    tennis: SportLevel = SportLevel.NO
-
-    single_talent: str | None = Field(
-        default=None,
-        max_length=500,
-    )
-
-    group_talent_contribution: int = Field(
-        ge=0,
-        le=100,
-    )
-
-    qna_contribution : int = Field(
-        ge=0,
-        le=100
-    )
+    games: list[str] = Field(default_factory=list)
+    experience_years: str | None = None
+    critical_situation: list[str] = Field(default_factory=list)
+    creative_talent: list[str] = Field(default_factory=list)
+    sportsmanship: list[str] = Field(default_factory=list)
+    preference: list[str] = Field(default_factory=list)
+    raw_responses: dict[str, Any] = Field(default_factory=dict)
 
 
 class RegistrationUpdate(BaseModel):
+    games: list[str] | None = None
+    experience_years: str | None = None
+    critical_situation: list[str] | None = None
+    creative_talent: list[str] | None = None
+    sportsmanship: list[str] | None = None
+    preference: list[str] | None = None
+    raw_responses: dict[str, Any] | None = None
 
-    tshirt_size: TshirtSize | None = None
 
-    cricket: SportLevel | None = None
-    volleyball: SportLevel | None = None
-    kabaddi: SportLevel | None = None
-    kho_kho: SportLevel | None = None
-    foosball: SportLevel | None = None
-    frisbee: SportLevel | None = None
-    dodge_ball: SportLevel | None = None
-    chess: SportLevel | None = None
-    carrom: SportLevel | None = None
-    tennis: SportLevel | None = None
+class RegistrationResponse(BaseModel):
+    id: str
+    user_id: str
+    apc_year: int
+    games: list[str]
+    experience_years: str | None = None
+    critical_situation: list[str]
+    creative_talent: list[str]
+    sportsmanship: list[str]
+    preference: list[str]
+    raw_responses: dict[str, Any] = Field(default_factory=dict)
+    sports: dict[str, str] = Field(default_factory=dict)
+    created_by: str | None = None
+    updated_by: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
 
-    single_talent: str | None = Field(
-        default=None,
-        max_length=500,
-    )
 
-    group_talent_contribution: int | None = Field(
-        default=None,
-        ge=0,
-        le=100,
-    )
+class DuplicateMatchItem(BaseModel):
+    row_number: int
+    match_type: str  # "roll_no" or "name"
+    search_value: str
+    matched_users: list[dict[str, Any]]
+    message: str
 
-    qna_contribution : int | None = Field(
-            default=None,
-            ge=0,
-            le=100
-    )
+
+class UnmatchedRowItem(BaseModel):
+    row_number: int
+    roll_no: str | None = None
+    name: str | None = None
+    email: str | None = None
+    reason: str
+
+
+class RegistrationCSVImportResponse(BaseModel):
+    total_rows: int
+    imported_count: int
+    updated_count: int
+    duplicates: list[DuplicateMatchItem] = Field(default_factory=list)
+    unmatched: list[UnmatchedRowItem] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from enum import Enum
+from typing import Any
 
 from beanie import Document, PydanticObjectId
 from pydantic import Field
@@ -7,69 +7,52 @@ from pymongo import ASCENDING, IndexModel
 
 from src.common.audit import AuditMixin
 
-class SportLevel(str, Enum):
-    EXPERT = "expert"
-    INTERMEDIATE = "intermediate"
-    BEGINNER = "beginner"
-    NO = "no"
 
+class Registration(Document, AuditMixin):
 
-class TshirtSize(str, Enum):
-    XS = "XS"
-    S = "S"
-    M = "M"
-    L = "L"
-    XL = "XL"
-    XXL = "XXL"
-    XXXL = "XXXL"
+    user_id: PydanticObjectId
+    apc_year: int = Field(default_factory=lambda: datetime.now(timezone.utc).year)
 
-class Registration( Document, AuditMixin):
+    # 1. Which games do you play with enthusiasm? (Single or Multi-select)
+    games: list[str] = Field(default_factory=list)
 
-    user_id : PydanticObjectId
-    apc_year : int
-    tshirt_size : TshirtSize
+    # 2. How many years of experience do you have in the Bhaktiparv?
+    experience_years: str | None = None
 
-    # sports
-    cricket : SportLevel = SportLevel.NO
-    volleyball : SportLevel = SportLevel.NO
-    kabaddi : SportLevel = SportLevel.NO
-    kho_kho : SportLevel = SportLevel.NO
-    foosball : SportLevel = SportLevel.NO
-    frisbee : SportLevel = SportLevel.NO
-    dodge_ball : SportLevel = SportLevel.NO
-    chess : SportLevel = SportLevel.NO
-    carrom : SportLevel = SportLevel.NO
-    tennis : SportLevel = SportLevel.NO
+    # 3. How do you respond in critical situation? (Single or Multi-select)
+    critical_situation: list[str] = Field(default_factory=list)
 
-    single_talent : str | None = None
+    # 4. Creative Task & Talent (Single or Multi-select)
+    creative_talent: list[str] = Field(default_factory=list)
 
-    group_talent_contribution : int = Field(
-        ge=0,
-        le=100
-    )
+    # 5. Sportsmanship (Single or Multi-select)
+    sportsmanship: list[str] = Field(default_factory=list)
 
-    qna_contribution : int = Field(
-        ge=0,
-        le=100
-    )
+    # 6. What do you prefer? (Single or Multi-select, e.g., Working Individually, Teamwork)
+    preference: list[str] = Field(default_factory=list)
 
+    # Full raw responses from imported questionnaire CSV
+    raw_responses: dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def sports_map(self) -> dict[str, str]:
+        """Convert enthusiasm games list into a sports map for auction & leaderboard displays"""
+        if not self.games:
+            return {}
+        result = {}
+        for g in self.games:
+            clean_k = g.strip().lower().replace(" ", "_").replace("-", "_")
+            if clean_k:
+                result[clean_k] = "EXPERT"
+        return result
 
     class Settings:
         name = "registrations"
 
         indexes = [
             IndexModel(
-                [("user_id",ASCENDING)],
+                [("user_id", ASCENDING)],
                 unique=True,
                 name="uq_registration_user",
-            ),
-            IndexModel(
-                [("apc_year",ASCENDING)],
-                name="idx_registration_apc_yser",
-            ),
-            IndexModel(
-                [("user_id",ASCENDING),("apc_year",ASCENDING)],
-                unique=True,
-                name="uq_registration_user_year",
             ),
         ]
