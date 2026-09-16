@@ -48,8 +48,17 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[
+        "*",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:3000",
+        "https://knbd8zcv-3000.inc1.devtunnels.ms",
+    ],
+    allow_credentials=False,   # JWT is sent via Authorization header, not cookies
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -75,5 +84,5 @@ async def root():
             "name" : settings.APP_NAME,
             "version" : settings.VERSION
         },
-        message = "Welcome to Bhaktipurv"
+        message = "Welcome to BhaktiParv"
     )
