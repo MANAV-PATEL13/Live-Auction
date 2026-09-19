@@ -107,6 +107,7 @@ class PublicSessionInfo(BaseModel):
     status: str
     remaining_count: int
     unsold_count: int
+    sold_count: int = 0
     started_at: datetime | None = None
 
 

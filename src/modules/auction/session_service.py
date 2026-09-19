@@ -428,7 +428,7 @@ class AuctionSessionService:
             )
 
         # ======================================================
-        # 10. Update Redis current auction (immediately LIVE on floor)
+        # 10. Update Redis current auction (Staged in Review Desk, Display OFF, Bids Locked)
         # ======================================================
 
         await auction_redis.set_current_auction(
@@ -439,11 +439,13 @@ class AuctionSessionService:
                 "base_price": user.base_price,
                 "current_bid": user.base_price,
                 "current_team_id": None,
-                "status": "LIVE",
+                "status": "STANDBY",
+                "is_displayed": False,
             }
         )
 
-        await auction_redis.set_status("LIVE")
+        await auction_redis.set_status("STANDBY")
+        await auction_redis.set_bidding_enabled(False)
 
         # ======================================================
         # 11. Initial bid state
@@ -498,8 +500,16 @@ class AuctionSessionService:
                 "image_url": user.image_url,
                 "base_price": user.base_price,
                 "current_bid": user.base_price,
-                "status": "LIVE",
-                "is_staged": False,
+                "status": "STANDBY",
+                "is_staged": True,
+                "is_displayed": False,
+            },
+        )
+
+        await auction_websocket.broadcast(
+            AuctionWebSocketEvent.BIDDING_TOGGLED,
+            {
+                "bidding_enabled": False,
             },
         )
 

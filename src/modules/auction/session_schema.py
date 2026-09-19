@@ -39,6 +39,7 @@ class AuctionSessionResponse(BaseModel):
 
     remaining_count : int
     unsold_count : int
+    sold_count : int = 0
 
     current_user_id : str | None = None
     current_auction_id : str | None = None

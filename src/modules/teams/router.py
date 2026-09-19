@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Response
 from beanie import PydanticObjectId
 
+from src.common.exceptions import AppException, ForbiddenException
 from src.common.utils import success_response
-from src.modules.auth.dependencies import require_permission
+from src.modules.auth.dependencies import require_permission, check_user_permission
 from src.modules.teams.schema import (
     TeamCreate,
     TeamUpdate,
@@ -22,6 +23,48 @@ router = APIRouter(
 )
 
 service = TeamService()
+
+
+# --- CSV Import & Export ---
+@router.post("/import-csv")
+async def import_teams_csv(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_permission("team:create")),
+):
+    if not file:
+        raise AppException(message="CSV file is required", code=400)
+    if not file.filename.lower().endswith(".csv"):
+        raise AppException(message="Only CSV files are allowed", code=400)
+
+    content = await file.read()
+    result = await service.import_csv(content, current_user.id)
+
+    return success_response(
+        code=200,
+        message="Team CSV import completed",
+        data=result.model_dump(),
+    )
+
+
+@router.get("/export-csv")
+async def export_teams_csv(
+    current_user: User = Depends(require_permission("team:view")),
+):
+    return await service.export_csv()
+
+
+@router.get("/import-template")
+async def get_import_template(
+    current_user: User = Depends(require_permission("team:view")),
+):
+    csv_content = "name,code,image_url,captain\nRoyal Strikers,RS,https://example.com/logo.png,CS202601\nTitan Warriors,TW,,CS202602\n"
+    return Response(
+        content=csv_content.encode("utf-8-sig"),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": 'attachment; filename="teams_import_template.csv"',
+        },
+    )
 
 
 @router.post("")
@@ -46,7 +89,7 @@ async def get_all_teams(
         require_permission("team:view")
     ),
 ):
-    teams = await service.get_all()
+    teams = await service.get_all_with_counts()
 
     return success_response(
         code=200,
@@ -56,6 +99,7 @@ async def get_all_teams(
 
 
 @router.get("/{team_id}")
+
 async def get_team(
     team_id: PydanticObjectId,
     current_user: User = Depends(
@@ -63,11 +107,24 @@ async def get_team(
     ),
 ):
     team = await service.get_by_id(team_id)
+    team_members = await User.find(User.team_id == team.id).to_list()
+    squad_ids = set(str(u.id) for u in team_members)
+    if team.captain_id:
+        squad_ids.add(str(team.captain_id))
+    if team.vice_captain_id:
+        squad_ids.add(str(team.vice_captain_id))
+    count = len(squad_ids)
+    t_dict = team.model_dump()
+    t_dict["id"] = str(team.id)
+    t_dict["member_count"] = count
+    t_dict["members_count"] = count
+    t_dict["player_count"] = count
+    t_dict["players_count"] = count
 
     return success_response(
         code=200,
         message="Team fetched successfully",
-        data=team,
+        data=TeamResponse(**t_dict),
     )
 
 
@@ -147,6 +204,24 @@ async def get_team_members(
         require_permission("team:view")
     ),
 ):
+    can_view_all = (
+        current_user.is_superuser
+        or await check_user_permission(current_user, "team:viewall")
+        or await check_user_permission(current_user, "team:update")
+    )
+
+    if not can_view_all:
+        user_team_id = str(current_user.team_id) if current_user.team_id else None
+        user_id_str = str(current_user.id)
+        team = await service.get_by_id(PydanticObjectId(team_id))
+        is_own_team = (
+            (user_team_id and str(team.id) == user_team_id)
+            or (team.captain_id and str(team.captain_id) == user_id_str)
+            or (team.vice_captain_id and str(team.vice_captain_id) == user_id_str)
+        )
+        if not is_own_team:
+            raise ForbiddenException("You can only view your own team members")
+
     users = await service.get_members(team_id)
 
     return success_response(
