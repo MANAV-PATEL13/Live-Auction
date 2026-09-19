@@ -1,0 +1,2262 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Bhaktipurv",
+        "version": "v2.0.0"
+    },
+    "paths": {
+        "/auth/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register",
+                "operationId": "register_auth_register_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login",
+                "operationId": "login_auth_login_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout",
+                "operationId": "logout_auth_logout_post",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh Token",
+                "operationId": "refresh_token_auth_refresh_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshTokenRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get Users",
+                "operationId": "get_users_users_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/users/me": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get Me",
+                "operationId": "get_me_users_me_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/users/{user_id}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get User",
+                "operationId": "get_user_users__user_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete User",
+                "operationId": "delete_user_users__user_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/groups": {
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update User Groups",
+                "operationId": "update_user_groups_users__user_id__groups_put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserGroupsUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/activate": {
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Activate User",
+                "operationId": "activate_user_users__user_id__activate_put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/deactivate": {
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Deactivate User",
+                "operationId": "deactivate_user_users__user_id__deactivate_put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/permissions": {
+            "get": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Get Permissions",
+                "operationId": "get_permissions_permissions_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Create Permission",
+                "operationId": "create_permission_permissions_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PermissionCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/permissions/{permission_id}": {
+            "get": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Get Permission",
+                "operationId": "get_permission_permissions__permission_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "permission_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Permission Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Update Permission",
+                "operationId": "update_permission_permissions__permission_id__put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "permission_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Permission Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PermissionUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Permissions"
+                ],
+                "summary": "Delete Permission",
+                "operationId": "delete_permission_permissions__permission_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "permission_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Permission Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/permission-groups": {
+            "get": {
+                "tags": [
+                    "Permission Groups"
+                ],
+                "summary": "Get Groups",
+                "operationId": "get_groups_permission_groups_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Permission Groups"
+                ],
+                "summary": "Create Group",
+                "operationId": "create_group_permission_groups_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PermissionGroupCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/permission-groups/{group_id}": {
+            "get": {
+                "tags": [
+                    "Permission Groups"
+                ],
+                "summary": "Get Group",
+                "operationId": "get_group_permission_groups__group_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Group Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Permission Groups"
+                ],
+                "summary": "Update Group",
+                "operationId": "update_group_permission_groups__group_id__put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Group Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PermissionGroupUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Permission Groups"
+                ],
+                "summary": "Delete Group",
+                "operationId": "delete_group_permission_groups__group_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Group Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/canteen": {
+            "get": {
+                "tags": [
+                    "canteen"
+                ],
+                "summary": "Get Menu Items",
+                "operationId": "get_menu_items_canteen_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "canteen"
+                ],
+                "summary": "Create Menu Item",
+                "operationId": "create_menu_item_canteen_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MenuItemCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/canteen/{item_id}": {
+            "get": {
+                "tags": [
+                    "canteen"
+                ],
+                "summary": "Get Menu Item",
+                "operationId": "get_menu_item_canteen__item_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "item_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/PydanticObjectId"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "canteen"
+                ],
+                "summary": "Update Menu Item",
+                "operationId": "update_menu_item_canteen__item_id__put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "item_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/PydanticObjectId"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MenuItemUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "canteen"
+                ],
+                "summary": "Delete Menu Item",
+                "operationId": "delete_menu_item_canteen__item_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "item_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/PydanticObjectId"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/teams": {
+            "get": {
+                "tags": [
+                    "Teams"
+                ],
+                "summary": "Get All Teams",
+                "operationId": "get_all_teams_teams_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Teams"
+                ],
+                "summary": "Create Team",
+                "operationId": "create_team_teams_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TeamCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/teams/{team_id}": {
+            "get": {
+                "tags": [
+                    "Teams"
+                ],
+                "summary": "Get Team",
+                "operationId": "get_team_teams__team_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/PydanticObjectId"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Teams"
+                ],
+                "summary": "Update Team",
+                "operationId": "update_team_teams__team_id__put",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/PydanticObjectId"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TeamUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Teams"
+                ],
+                "summary": "Delete Team",
+                "operationId": "delete_team_teams__team_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/PydanticObjectId"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/app-config": {
+            "get": {
+                "tags": [
+                    "App Config"
+                ],
+                "summary": "Get App Config",
+                "operationId": "get_app_config_app_config_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResponseModel_AppConfigResponse_"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "App Config"
+                ],
+                "summary": "Update App Config",
+                "operationId": "update_app_config_app_config_put",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AppConfigUpdate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResponseModel_AppConfigResponse_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "App Config"
+                ],
+                "summary": "Create App Config",
+                "operationId": "create_app_config_app_config_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AppConfigUpdate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResponseModel_AppConfigResponse_"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/sessions/history": {
+            "get": {
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get Login History",
+                "operationId": "get_login_history_sessions_history_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/sessions/history/{user_id}": {
+            "get": {
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get Login History",
+                "operationId": "get_login_history_sessions_history__user_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/PydanticObjectId"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/app": {
+            "get": {
+                "summary": "Root",
+                "operationId": "root_app_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AppConfigResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "maintenance_mode": {
+                        "type": "boolean",
+                        "title": "Maintenance Mode"
+                    },
+                    "maintenance_message": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Maintenance Message"
+                    },
+                    "minimum_version": {
+                        "type": "string",
+                        "title": "Minimum Version"
+                    },
+                    "latest_version": {
+                        "type": "string",
+                        "title": "Latest Version"
+                    },
+                    "update_message": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Update Message"
+                    },
+                    "android_store_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Android Store Url"
+                    },
+                    "created_by": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Created By"
+                    },
+                    "updated_by": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Updated By"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "maintenance_mode",
+                    "maintenance_message",
+                    "minimum_version",
+                    "latest_version",
+                    "update_message",
+                    "android_store_url",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "AppConfigResponse"
+            },
+            "AppConfigUpdate": {
+                "properties": {
+                    "maintenance_mode": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Maintenance Mode"
+                    },
+                    "maintenance_message": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Maintenance Message"
+                    },
+                    "minimum_version": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Minimum Version"
+                    },
+                    "latest_version": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Latest Version"
+                    },
+                    "update_message": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Update Message"
+                    },
+                    "android_store_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Android Store Url"
+                    }
+                },
+                "type": "object",
+                "title": "AppConfigUpdate"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "LoginRequest": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email"
+                    },
+                    "password": {
+                        "type": "string",
+                        "title": "Password"
+                    },
+                    "device_id": {
+                        "type": "string",
+                        "title": "Device Id"
+                    },
+                    "device_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Device Name"
+                    },
+                    "platform": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Platform"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "password",
+                    "device_id"
+                ],
+                "title": "LoginRequest"
+            },
+            "MenuItemCreate": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 2,
+                        "title": "Name"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "price": {
+                        "type": "number",
+                        "exclusiveMinimum": 0,
+                        "title": "Price"
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "title": "Image Url"
+                    },
+                    "is_show": {
+                        "type": "boolean",
+                        "title": "Is Show",
+                        "default": true
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "price",
+                    "image_url"
+                ],
+                "title": "MenuItemCreate"
+            },
+            "MenuItemUpdate": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "minLength": 2
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "price": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Price"
+                    },
+                    "image_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Image Url"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "is_show": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Is Show"
+                    }
+                },
+                "type": "object",
+                "title": "MenuItemUpdate"
+            },
+            "PermissionCreate": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Name"
+                    },
+                    "code": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Code"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "code"
+                ],
+                "title": "PermissionCreate"
+            },
+            "PermissionGroupCreate": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Name"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "permission_ids": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Permission Ids"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "title": "PermissionGroupCreate"
+            },
+            "PermissionGroupUpdate": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100,
+                                "minLength": 2
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "permission_ids": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Permission Ids"
+                    },
+                    "is_active": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Is Active"
+                    }
+                },
+                "type": "object",
+                "title": "PermissionGroupUpdate"
+            },
+            "PermissionUpdate": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100,
+                                "minLength": 2
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "code": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100,
+                                "minLength": 2
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Code"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "is_active": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Is Active"
+                    }
+                },
+                "type": "object",
+                "title": "PermissionUpdate"
+            },
+            "PydanticObjectId": {
+                "type": "string",
+                "maxLength": 24,
+                "minLength": 24,
+                "pattern": "^[0-9a-f]{24}$",
+                "example": "5eb7cf5a86d9755df3a6c593"
+            },
+            "RefreshTokenRequest": {
+                "properties": {
+                    "refresh_token": {
+                        "type": "string",
+                        "title": "Refresh Token"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "refresh_token"
+                ],
+                "title": "RefreshTokenRequest"
+            },
+            "ResponseModel_AppConfigResponse_": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "title": "Code"
+                    },
+                    "message": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "data": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/AppConfigResponse"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "success",
+                    "code",
+                    "message"
+                ],
+                "title": "ResponseModel[AppConfigResponse]"
+            },
+            "TeamCreate": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Name"
+                    },
+                    "code": {
+                        "type": "string",
+                        "maxLength": 30,
+                        "minLength": 1,
+                        "title": "Code"
+                    },
+                    "image_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Image Url"
+                    },
+                    "captain_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Captain Id"
+                    },
+                    "vice_captain_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Vice Captain Id"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active",
+                        "default": true
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "code"
+                ],
+                "title": "TeamCreate"
+            },
+            "TeamUpdate": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 2,
+                        "title": "Name"
+                    },
+                    "code": {
+                        "type": "string",
+                        "maxLength": 30,
+                        "minLength": 1,
+                        "title": "Code"
+                    },
+                    "image_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Image Url"
+                    },
+                    "captain_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Captain Id"
+                    },
+                    "vice_captain_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Vice Captain Id"
+                    },
+                    "is_active": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Is Active"
+                    }
+                },
+                "type": "object",
+                "title": "TeamUpdate"
+            },
+            "UserCreate": {
+                "properties": {
+                    "first_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "First Name"
+                    },
+                    "middle_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Middle Name"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Last Name"
+                    },
+                    "roll_no": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Roll No"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email"
+                    },
+                    "mobile": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Mobile"
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 6,
+                        "title": "Password"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "first_name",
+                    "last_name",
+                    "email",
+                    "password"
+                ],
+                "title": "UserCreate"
+            },
+            "UserGroupsUpdate": {
+                "properties": {
+                    "group_ids": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Group Ids"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "group_ids"
+                ],
+                "title": "UserGroupsUpdate"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    },
+                    "input": {
+                        "title": "Input"
+                    },
+                    "ctx": {
+                        "type": "object",
+                        "title": "Context"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        },
+        "securitySchemes": {
+            "HTTPBearer": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
+    }
+}
