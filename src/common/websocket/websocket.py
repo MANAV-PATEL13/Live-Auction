@@ -17,6 +17,7 @@ class AuctionWebSocketEvent:
     VIEWER_COUNT = "auction:viewer_count"
     BIDDING_TOGGLED = "auction:bidding_toggled"
     ACTIVITY_LOG = "auction:activity_log"
+    FORCE_REFRESH = "auction:force_refresh"
 
 
 class AuctionWebSocketService:

@@ -32,10 +32,45 @@ async def get_users(
     )
 
 
+from beanie import PydanticObjectId
+from beanie.operators import In
+from src.modules.permission_groups.model import PermissionGroup
+from src.modules.permissions.model import Permission
+
+
 @router.get("/me")
 async def get_me(
     current_user: User = Depends(get_current_user),
 ):
+    permissions_list: list[str] = []
+    if current_user.is_superuser:
+        permissions_list = ["*"]
+    elif current_user.group_ids:
+        valid_group_ids = [
+            PydanticObjectId(gid)
+            for gid in current_user.group_ids
+            if PydanticObjectId.is_valid(gid)
+        ]
+        if valid_group_ids:
+            groups = await PermissionGroup.find(
+                In(PermissionGroup.id, valid_group_ids),
+                PermissionGroup.is_active == True,
+            ).to_list()
+            all_permission_ids: list[str] = []
+            for g in groups:
+                all_permission_ids.extend(g.permission_ids)
+            valid_pids = [
+                PydanticObjectId(pid)
+                for pid in all_permission_ids
+                if PydanticObjectId.is_valid(pid)
+            ]
+            if valid_pids:
+                perms = await Permission.find(
+                    In(Permission.id, valid_pids),
+                    Permission.is_active == True,
+                ).to_list()
+                permissions_list = [p.code for p in perms]
+
     return success_response(
         code=200,
         message="Current user fetched successfully",
@@ -56,6 +91,7 @@ async def get_me(
             "is_active": current_user.is_active,
             "is_allowed": current_user.is_allowed,
             "is_superuser": current_user.is_superuser,
+            "permissions": permissions_list,
         },
     )
 

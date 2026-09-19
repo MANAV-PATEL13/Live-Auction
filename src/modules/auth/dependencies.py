@@ -126,10 +126,16 @@ async def check_user_permission(current_user: User, permission_code: str) -> boo
     if not valid_permission_ids:
         return False
 
-    # Check if the required permission exists and is active
+    # Check if the required permission or its standard alias exists and is active
+    codes = [permission_code]
+    if permission_code.startswith("canteen:") and ":item:" not in permission_code:
+        codes.append(permission_code.replace("canteen:", "canteen:item:"))
+    elif ":item:" in permission_code:
+        codes.append(permission_code.replace(":item:", ":"))
+
     permission = await Permission.find_one(
         In(Permission.id, valid_permission_ids),
-        Permission.code == permission_code,
+        In(Permission.code, codes),
         Permission.is_active == True,
     )
 

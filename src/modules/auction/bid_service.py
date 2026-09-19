@@ -476,6 +476,11 @@ class AuctionBidService:
         await auction_redis.clear_current_auction()
         await auction_redis.set_bid(0, "")
 
+        sold_count = await Auction.find(
+            Auction.session_id == auction.session_id,
+            Auction.status == AuctionStatus.SOLD,
+        ).count()
+
         await auction_websocket.broadcast(
             AuctionWebSocketEvent.PLAYER_SOLD,
             {
@@ -492,10 +497,12 @@ class AuctionBidService:
                 "team_name": team.name,
                 "team_code": team.code,
                 "team_image_url": team.image_url,
+                "team_balance": team.balance,
                 "final_price": auction.current_bid,
                 "winning_bid": auction.current_bid,
                 "amount_display": maroon_to_pushp(auction.current_bid),
                 "status": "SOLD",
+                "sold_count": sold_count,
             },
         )
 

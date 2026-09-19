@@ -1,10 +1,13 @@
+import csv
+import io
 from datetime import datetime, timezone
 from beanie import PydanticObjectId
+from fastapi.responses import StreamingResponse
 
 from src.common.exceptions import AppException, ConflictException, NotFoundException
 from src.modules.teams.model import Team
 from src.modules.teams.repository import TeamRepository
-from src.modules.teams.schema import TeamCreate, TeamUpdate
+from src.modules.teams.schema import TeamCreate, TeamResponse, TeamUpdate, TeamImportSummary, TeamImportReport
 from src.modules.teams.wallet_constants import WalletTransactionType
 from src.modules.teams.wallet_model import TeamWalletTransaction
 from src.modules.teams.wallet_repository import TeamWalletRepository
@@ -437,6 +440,44 @@ class TeamService:
     ) -> list[Team]:
         return await self.team_repo.get_all(active_only=active_only)
 
+    async def get_all_with_counts(
+        self,
+        active_only: bool = False,
+    ) -> list[TeamResponse]:
+        teams = await self.team_repo.get_all(active_only=active_only)
+        
+        count_map: dict[str, set[str]] = {}
+        try:
+            users_with_team = await User.find(User.team_id != None).to_list()
+            for u in users_with_team:
+                if u.team_id:
+                    tid = str(u.team_id)
+                    if tid not in count_map:
+                        count_map[tid] = set()
+                    count_map[tid].add(str(u.id))
+        except Exception as e:
+            print(f"[TeamService] Error aggregating users by team_id: {e}")
+
+        result: list[TeamResponse] = []
+        for team in teams:
+            t_dict = team.model_dump()
+            t_id = str(team.id)
+            
+            squad_ids = set(count_map.get(t_id, set()))
+            if team.captain_id:
+                squad_ids.add(str(team.captain_id))
+            if team.vice_captain_id:
+                squad_ids.add(str(team.vice_captain_id))
+                
+            c = len(squad_ids)
+            t_dict["id"] = t_id
+            t_dict["member_count"] = c
+            t_dict["members_count"] = c
+            t_dict["player_count"] = c
+            t_dict["players_count"] = c
+            result.append(TeamResponse(**t_dict))
+        return result
+
     async def update(
         self,
         team_id: PydanticObjectId,
@@ -702,3 +743,242 @@ class TeamService:
             created_by=current_user.id,
         )
         return await self.wallet_repository.create(tx)
+
+    # ---------------------------------------------------------
+    # CSV IMPORT & EXPORT
+    # ---------------------------------------------------------
+
+    async def import_csv(
+        self,
+        file_content: bytes,
+        current_user_id: PydanticObjectId | None = None,
+    ) -> TeamImportSummary:
+        try:
+            content = file_content.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            raise AppException(
+                message="CSV file must be UTF-8 encoded",
+                code=400,
+            )
+
+        reader = csv.DictReader(io.StringIO(content))
+        if not reader.fieldnames:
+            raise AppException(
+                message="CSV file is empty or has no header",
+                code=400,
+            )
+
+        # Normalize field names (case-insensitive, trimmed)
+        field_map = {}
+        for fn in reader.fieldnames:
+            if not fn:
+                continue
+            normalized_key = fn.strip().lower().replace(" ", "_")
+            field_map[normalized_key] = fn
+
+        # Ensure required fields (name, code)
+        if "name" not in field_map or "code" not in field_map:
+            raise AppException(
+                message="CSV must contain 'name' and 'code' columns",
+                code=400,
+            )
+
+        total_rows = 0
+        created_count = 0
+        updated_count = 0
+        failed_count = 0
+        reports: list[TeamImportReport] = []
+
+        for idx, raw_row in enumerate(reader, start=2):
+            total_rows += 1
+
+            name_val = raw_row.get(field_map.get("name", "name"))
+            code_val = raw_row.get(field_map.get("code", "code"))
+
+            # Check image_url variants
+            img_key = field_map.get("image_url") or field_map.get("image") or field_map.get("logo")
+            img_val = raw_row.get(img_key) if img_key else None
+
+            # Check captain variants (captain, captian, captain_roll_no, etc.)
+            cap_key = (
+                field_map.get("captain")
+                or field_map.get("captian")
+                or field_map.get("captain_roll_no")
+                or field_map.get("captain_email")
+            )
+            cap_val = raw_row.get(cap_key) if cap_key else None
+
+            name = name_val.strip() if name_val else ""
+            code = code_val.strip().upper() if code_val else ""
+            image_url = img_val.strip() if img_val else None
+            captain_str = cap_val.strip() if cap_val else None
+
+            if not name:
+                failed_count += 1
+                reports.append(
+                    TeamImportReport(
+                        row_number=idx,
+                        name=name,
+                        code=code,
+                        status="FAILED",
+                        reason="Team name is required",
+                    )
+                )
+                continue
+
+            if not code:
+                failed_count += 1
+                reports.append(
+                    TeamImportReport(
+                        row_number=idx,
+                        name=name,
+                        code=code,
+                        status="FAILED",
+                        reason="Team code is required",
+                    )
+                )
+                continue
+
+            # Resolve captain user if provided
+            captain_user: User | None = None
+            if captain_str:
+                # 1. Search by roll_no
+                captain_user = await User.find_one(
+                    User.roll_no == captain_str,
+                    User.is_active == True,
+                )
+                # 2. Search by email
+                if not captain_user:
+                    captain_user = await User.find_one(
+                        User.email == captain_str.lower(),
+                        User.is_active == True,
+                    )
+                # 3. Search by PydanticObjectId if valid
+                if not captain_user and PydanticObjectId.is_valid(captain_str):
+                    captain_user = await User.find_one(
+                        User.id == PydanticObjectId(captain_str),
+                        User.is_active == True,
+                    )
+
+            try:
+                # Check if team exists by code (unique)
+                existing_team = await Team.find_one(Team.code == code)
+
+                if existing_team:
+                    # Update existing team
+                    existing_team.name = name
+                    if image_url is not None:
+                        existing_team.image_url = image_url
+                    if captain_user:
+                        existing_team.captain_id = captain_user.id
+                    if current_user_id:
+                        existing_team.mark_updated(current_user_id)
+                    await self.team_repo.update(existing_team)
+
+                    # Assign captain to this team
+                    if captain_user:
+                        captain_user.team_id = existing_team.id
+                        captain_user.team_name = existing_team.name
+                        if captain_user.team_price is None:
+                            captain_user.team_price = 0
+                        await captain_user.save()
+
+                    updated_count += 1
+                    reports.append(
+                        TeamImportReport(
+                            row_number=idx,
+                            name=name,
+                            code=code,
+                            status="UPDATED",
+                        )
+                    )
+                else:
+                    # Create new team
+                    new_team = Team(
+                        name=name,
+                        code=code,
+                        image_url=image_url,
+                        captain_id=captain_user.id if captain_user else None,
+                        initial_balance=6250,
+                        balance=6250,
+                        is_active=True,
+                    )
+                    if current_user_id:
+                        new_team.mark_created(current_user_id)
+                    created_team = await self.team_repo.create(new_team)
+
+                    # Assign captain to this team
+                    if captain_user and created_team:
+                        captain_user.team_id = created_team.id
+                        captain_user.team_name = created_team.name
+                        if captain_user.team_price is None:
+                            captain_user.team_price = 0
+                        await captain_user.save()
+
+                    created_count += 1
+                    reports.append(
+                        TeamImportReport(
+                            row_number=idx,
+                            name=name,
+                            code=code,
+                            status="CREATED",
+                        )
+                    )
+            except Exception as ex:
+                failed_count += 1
+                reports.append(
+                    TeamImportReport(
+                        row_number=idx,
+                        name=name,
+                        code=code,
+                        status="FAILED",
+                        reason=str(ex),
+                    )
+                )
+
+        return TeamImportSummary(
+            total_rows=total_rows,
+            created_count=created_count,
+            updated_count=updated_count,
+            failed_count=failed_count,
+            reports=reports,
+        )
+
+    async def export_csv(self) -> StreamingResponse:
+        teams = await Team.find(Team.is_active == True).sort("+code").to_list()
+
+        # Collect captain IDs
+        captain_ids = [t.captain_id for t in teams if t.captain_id]
+        captains = {}
+        if captain_ids:
+            cap_users = await User.find({"_id": {"$in": captain_ids}}).to_list()
+            captains = {u.id: u for u in cap_users}
+
+        output = io.StringIO(newline="")
+        writer = csv.writer(output)
+
+        # Write exact canonical header
+        writer.writerow(["name", "code", "image_url", "captain"])
+
+        for t in teams:
+            cap_u = captains.get(t.captain_id) if t.captain_id else None
+            # Use roll_no if available, else email or name
+            cap_ident = ""
+            if cap_u:
+                cap_ident = cap_u.roll_no or cap_u.email or f"{cap_u.first_name} {cap_u.last_name}".strip()
+
+            writer.writerow([
+                t.name or "",
+                t.code or "",
+                t.image_url or "",
+                cap_ident,
+            ])
+
+        output.seek(0)
+        return StreamingResponse(
+            io.BytesIO(output.getvalue().encode("utf-8-sig")),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": 'attachment; filename="teams_export.csv"',
+            },
+        )

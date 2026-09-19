@@ -24,6 +24,7 @@ ALL_PERMISSIONS = [
     {"name": "Create Team", "code": "team:create", "description": "Permission to create new teams"},
     {"name": "Update Team", "code": "team:update", "description": "Permission to update team metadata and balance"},
     {"name": "View Team", "code": "team:view", "description": "Permission to view teams and rosters"},
+    {"name": "View All Teams", "code": "team:viewall", "description": "Permission to view all teams across the system"},
     {"name": "Delete Team", "code": "team:delete", "description": "Permission to delete teams"},
     {"name": "AppConfig View", "code": "appconfig:view", "description": "Permission to view application system settings"},
     {"name": "AppConfig Update", "code": "appconfig:update", "description": "Permission to modify application system settings"},

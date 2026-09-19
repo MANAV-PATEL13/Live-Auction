@@ -74,9 +74,13 @@ def auction_to_response(
     )
 
 
-def session_to_response(
+async def session_to_response(
     session,
 ) -> AuctionSessionResponse:
+    sold_count = await Auction.find(
+        Auction.session_id == session.id,
+        Auction.status == AuctionStatus.SOLD,
+    ).count()
     return AuctionSessionResponse(
         id=str(session.id),
         status=session.status,
@@ -84,6 +88,7 @@ def session_to_response(
         sort_direction=session.sort_direction,
         remaining_count=len(session.remaining_queue),
         unsold_count=len(session.unsold_queue),
+        sold_count=sold_count,
         current_user_id=(
             str(session.current_user_id)
             if session.current_user_id
@@ -188,11 +193,17 @@ async def get_public_live_state():
             bidding_enabled=bidding_enabled,
         )
 
+    sold_count = await Auction.find(
+        Auction.session_id == session.id,
+        Auction.status == AuctionStatus.SOLD,
+    ).count()
+
     session_info = PublicSessionInfo(
         id=str(session.id),
         status=session.status,
         remaining_count=len(session.remaining_queue),
         unsold_count=len(session.unsold_queue),
+        sold_count=sold_count,
         started_at=session.started_at,
     )
 
@@ -348,6 +359,41 @@ async def get_public_teams():
             for u in members
         ]
 
+        existing_roster_ids = {str(u.id) for u in members}
+        if captain_user and str(captain_user.id) not in existing_roster_ids:
+            roster.insert(
+                0,
+                PublicRosterPlayer(
+                    id=str(captain_user.id),
+                    name=captain_user.name,
+                    roll_no=captain_user.roll_no,
+                    price=captain_user.team_price or 0,
+                    price_display=maroon_to_pushp(captain_user.team_price or 0),
+                    image_url=captain_user.image_url,
+                    mobile=captain_user.mobile,
+                    is_captain=True,
+                    is_vice_captain=False,
+                ),
+            )
+            existing_roster_ids.add(str(captain_user.id))
+
+        if vice_captain_user and str(vice_captain_user.id) not in existing_roster_ids:
+            roster.insert(
+                1 if (captain_user and str(captain_user.id) in existing_roster_ids) else 0,
+                PublicRosterPlayer(
+                    id=str(vice_captain_user.id),
+                    name=vice_captain_user.name,
+                    roll_no=vice_captain_user.roll_no,
+                    price=vice_captain_user.team_price or 0,
+                    price_display=maroon_to_pushp(vice_captain_user.team_price or 0),
+                    image_url=vice_captain_user.image_url,
+                    mobile=vice_captain_user.mobile,
+                    is_captain=False,
+                    is_vice_captain=True,
+                ),
+            )
+            existing_roster_ids.add(str(vice_captain_user.id))
+
         result.append(
             PublicTeamRosterResponse(
                 id=str(team.id),
@@ -432,7 +478,7 @@ async def start_auction(
             sort_by=request.sort_by,
             sort_direction=request.sort_direction,
         )
-        return session_to_response(session)
+        return await session_to_response(session)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -453,7 +499,7 @@ async def get_current_session(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No active auction session",
         )
-    return session_to_response(session)
+    return await session_to_response(session)
 
 
 @router.post(
@@ -712,7 +758,7 @@ async def get_admin_floor_state(
             }
 
     return {
-        "session": session_to_response(session),
+        "session": await session_to_response(session),
         "player": player_info,
         "current_auction_id": current.get("auction_id") if current else None,
         "current_bid": current_bid,
@@ -743,24 +789,65 @@ async def display_player_on_public_screen(
         )
 
     await auction_redis.set_status("LIVE")
+    current["status"] = "LIVE"
+    current["is_displayed"] = True
+    await auction_redis.set_current_auction(current)
+
     user = await User.get(PydanticObjectId(current["user_id"]))
     if user:
+        sports_data = None
+        from src.modules.registration.model import Registration
+        reg = await Registration.find_one(Registration.user_id == user.id)
+        if reg:
+            sports_data = reg.sports_map
+
         player_dict = {
             "id": str(user.id),
             "name": user.name,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
             "roll_no": user.roll_no,
             "image_url": user.image_url,
             "base_price": current.get("base_price", user.base_price),
             "base_price_display": maroon_to_pushp(current.get("base_price", user.base_price)),
+            "sports": sports_data,
+            "games": reg.games if reg else [],
+            "experience_years": reg.experience_years if reg else None,
+            "critical_situation": reg.critical_situation if reg else [],
+            "creative_talent": reg.creative_talent if reg else [],
+            "sportsmanship": reg.sportsmanship if reg else [],
+            "preference": reg.preference if reg else [],
+            "questions": {
+                "games": reg.games if reg else [],
+                "experience_years": reg.experience_years if reg else None,
+                "critical_situation": reg.critical_situation if reg else [],
+                "creative_talent": reg.creative_talent if reg else [],
+                "sportsmanship": reg.sportsmanship if reg else [],
+                "preference": reg.preference if reg else [],
+            } if reg else None,
         }
+        session = await session_service.repository.get_current()
+        session_data = {
+            "id": str(session.id),
+            "status": session.status,
+        } if session else None
+
         await auction_websocket.broadcast(
             AuctionWebSocketEvent.PLAYER_STARTED,
             {
                 "auction_id": current.get("auction_id"),
+                "session_id": current.get("session_id"),
+                "session": session_data,
+                "user_id": str(user.id),
                 "player": player_dict,
+                "name": user.name,
+                "roll_no": user.roll_no,
+                "image_url": user.image_url,
                 "base_price": current.get("base_price", user.base_price),
+                "current_bid": current.get("current_bid", user.base_price),
                 "status": "LIVE",
                 "is_staged": False,
+                "is_displayed": True,
             },
         )
         # Log to activity log
@@ -808,6 +895,57 @@ async def off_player_from_public_screen(
 
 
 @router.post(
+    "/session/force-refresh",
+)
+async def force_refresh_all_devices(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Broadcast an instant force-refresh command to all connected devices
+    (public LED screens, bidding clients, mobile apps, admin dashboards).
+    """
+    from datetime import datetime, timezone
+    from src.common.websocket.websocket import auction_websocket, AuctionWebSocketEvent
+    from src.modules.auction.activity_log_service import auction_activity_service
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    current = await auction_redis.get_current_auction()
+    session_oid = PydanticObjectId(current.get("session_id")) if current and current.get("session_id") and PydanticObjectId.is_valid(current.get("session_id")) else None
+    auction_oid = PydanticObjectId(current.get("auction_id")) if current and current.get("auction_id") and PydanticObjectId.is_valid(current.get("auction_id")) else None
+
+    # Broadcast WebSocket Event
+    await auction_websocket.broadcast(
+        AuctionWebSocketEvent.FORCE_REFRESH,
+        {
+            "triggered_by": current_user.name,
+            "triggered_by_id": str(current_user.id),
+            "timestamp": now_iso,
+            "message": f"Force refresh triggered by {current_user.name}",
+        },
+    )
+
+    # Activity Log
+    await auction_activity_service.log_activity(
+        type="FORCE_REFRESH",
+        title="Force Refresh 🔄",
+        description=f"{current_user.name} broadcasted force refresh to all connected devices",
+        session_id=session_oid,
+        auction_id=auction_oid,
+        metadata={
+            "user_id": str(current_user.id),
+            "user_name": current_user.name,
+            "timestamp": now_iso,
+        },
+    )
+
+    return {
+        "success": True,
+        "message": "Force refresh command successfully broadcasted to all connected devices",
+        "timestamp": now_iso,
+    }
+
+
+@router.post(
     "/session/{session_id}/pause",
     response_model=AuctionSessionResponse,
 )
@@ -824,7 +962,7 @@ async def pause_auction(
         session = await session_service.pause(
             session_object_id
         )
-        return session_to_response(session)
+        return await session_to_response(session)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -856,7 +994,7 @@ async def resume_auction(
                 else None
             ),
         )
-        return session_to_response(session)
+        return await session_to_response(session)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -881,7 +1019,7 @@ async def end_auction(
         session = await session_service.end(
             session_object_id
         )
-        return session_to_response(session)
+        return await session_to_response(session)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
