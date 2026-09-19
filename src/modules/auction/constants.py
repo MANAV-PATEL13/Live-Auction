@@ -24,6 +24,7 @@ class AuctionCurrency:
     MAROON_PER_PURPLE = 625
 
     TEAM_INITIAL_BALANCE = 6250
+    MAX_TEAM_PLAYERS = 11
 
 
 

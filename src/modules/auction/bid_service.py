@@ -141,6 +141,16 @@ class AuctionBidService:
                             f"Insufficient team budget. Team {team.name} has {team.balance} M remaining, but bid requires {amount} M."
                         )
 
+                    # Check max 11 players per team
+                    current_players_count = await User.find(
+                        User.team_id == team.id,
+                        session=session,
+                    ).count()
+                    if current_players_count >= 11:
+                        raise ValueError(
+                            f"Team squad is full ({current_players_count}/11 players). Maximum 11 players allowed per team."
+                        )
+
                 # --------------------------------------------------
                 # 7. Strict Next Eligible Bid Ladder Calculation
                 # (NO DIRECT JUMPS ALLOWED)
@@ -348,12 +358,21 @@ class AuctionBidService:
                 )
 
             # --------------------------------------------------
-            # 6. Check balance
+            # 6. Check balance & squad limit (Max 11 players)
             # --------------------------------------------------
 
             if team.balance < auction.current_bid:
                 raise ValueError(
                     "Team does not have enough balance"
+                )
+
+            team_player_count = await User.find(
+                User.team_id == team.id,
+                session=session,
+            ).count()
+            if team_player_count >= 11:
+                raise ValueError(
+                    f"Winning team squad is full ({team_player_count}/11 players). Maximum 11 players allowed per team."
                 )
 
             # --------------------------------------------------

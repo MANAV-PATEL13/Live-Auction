@@ -125,6 +125,14 @@ class TeamService:
                 code=400,
             )
 
+        # Check squad limit (Max 11 players)
+        current_members = await User.find(User.team_id == team.id).count()
+        if current_members >= 11:
+            raise AppException(
+                message=f"Team squad is full ({current_members}/11 players). Maximum 11 players allowed per team.",
+                code=400,
+            )
+
         # Check team balance
         if team.balance < price:
             raise AppException(
@@ -255,6 +263,14 @@ class TeamService:
                 code=400,
             )
 
+        # Check destination team squad limit (Max 11 players)
+        dest_members_count = await User.find(User.team_id == destination_team.id).count()
+        if dest_members_count >= 11:
+            raise AppException(
+                message=f"Destination team squad is full ({dest_members_count}/11 players). Maximum 11 players allowed per team.",
+                code=400,
+            )
+
         old_price = user.team_price or 0
         new_price = old_price if price is None else price
 
@@ -267,7 +283,7 @@ class TeamService:
         # Destination needs the new price
         if destination_team.balance < new_price:
             raise AppException(
-                message="Insufficient destination team balance",
+                message=f"Insufficient destination team balance ({destination_team.balance} M available, {new_price} M required)",
                 code=400,
             )
 
@@ -328,7 +344,7 @@ class TeamService:
             amount=old_price,
             balance_before=source_balance_before,
             balance_after=source_team.balance,
-            description=f"Transferred player {user.name} out",
+            description=f"Player {user.name} transferred to {destination_team.name}. Refunded {old_price} M",
             reference_id=str(destination_team.id),
             created_by=current_user.id,
         ).insert()
@@ -344,7 +360,7 @@ class TeamService:
             amount=-new_price,
             balance_before=destination_balance_before,
             balance_after=destination_team.balance,
-            description=f"Transferred player {user.name} in",
+            description=f"Player {user.name} transferred from {source_team.name} for {new_price} M",
             reference_id=str(source_team.id),
             created_by=current_user.id,
         ).insert()

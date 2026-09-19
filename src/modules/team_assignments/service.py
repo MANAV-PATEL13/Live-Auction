@@ -71,6 +71,13 @@ class TeamAssignmentService:
                 "User is already assigned to another team. Use the transfer feature"
             )
 
+        # check squad limit (max 11 players)
+        current_members = await User.find(User.team_id == team_object_id).count()
+        if current_members >= 11:
+            raise ConflictException(
+                f"Team squad is full ({current_members}/11 players). Maximum 11 players allowed per team."
+            )
+
         # check team balance
         if team.balance < price:
             raise ConflictException(
@@ -166,6 +173,13 @@ class TeamAssignmentService:
 
         if price_to_charge < 0:
             raise ConflictException("Price must be a non-negative number")
+
+        # Check new team squad limit (max 11 players)
+        new_team_members = await User.find(User.team_id == new_team_object_id).count()
+        if new_team_members >= 11:
+            raise ConflictException(
+                f"Destination team squad is full ({new_team_members}/11 players). Maximum 11 players allowed per team."
+            )
 
         # Check new team has sufficient balance
         if new_team.balance < price_to_charge:
