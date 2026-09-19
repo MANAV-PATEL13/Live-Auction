@@ -82,6 +82,7 @@ async def download_permissions_template(
         "Create Team,team:create,Permission to create new teams,true\n"
         "Update Team,team:update,Permission to update team metadata and balance,true\n"
         "View Team,team:view,Permission to view teams and rosters,true\n"
+        "View All Teams,team:viewall,Permission to view all teams across the system,true\n"
         "Delete Team,team:delete,Permission to delete teams,true\n"
         "AppConfig View,appconfig:view,Permission to view application system settings,true\n"
         "AppConfig Update,appconfig:update,Permission to modify application system settings,true\n"

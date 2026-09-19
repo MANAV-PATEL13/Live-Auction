@@ -29,6 +29,10 @@ class TeamResponse(BaseModel):
     balance: int
 
     is_active: bool
+    member_count: int = 0
+    members_count: int = 0
+    player_count: int = 0
+    players_count: int = 0
     created_by: str | None = None
     updated_by: str | None = None
     created_at: datetime
@@ -116,3 +120,27 @@ class TeamMembersResponse(BaseModel):
         if v is not None:
             return str(v)
         return v
+
+
+class TeamCSVRow(BaseModel):
+    name: str
+    code: str
+    image_url: str | None = None
+    captain: str | None = None
+
+
+class TeamImportReport(BaseModel):
+    row_number: int
+    name: str | None = None
+    code: str | None = None
+    status: str  # "CREATED", "UPDATED", "FAILED"
+    reason: str | None = None
+
+
+class TeamImportSummary(BaseModel):
+    total_rows: int = 0
+    created_count: int = 0
+    updated_count: int = 0
+    failed_count: int = 0
+    reports: list[TeamImportReport] = []
+
